@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+
+   <!-- Quarkus Language -->
+   <extension
+         point="org.eclipse.core.contenttype.contentTypes">
+      <content-type
+            base-type="org.eclipse.core.runtime.text"            
+            file-extensions="javacc"
+            id="com.javacc.lsp4e"
+            name="JavaCC 21"
+            priority="normal">
+      </content-type>
+   </extension>
+      
+   <extension
+         point="org.eclipse.ui.editors">
+      <editorContentTypeBinding
+            contentTypeId="com.javacc.lsp4e"
+            editorId="org.eclipse.ui.genericeditor.GenericEditor">
+      </editorContentTypeBinding>
+   </extension>
+      
+   <extension
+         point="org.eclipse.lsp4e.languageServer">
+      <server
+            class="com.javacc.lsp4e.JavaCCLanguageServer"
+            id="com.javacc.lsp4e"
+            label="JavaCC 21 Language Server"
+            singleton="true" >
+      </server>
+      <contentTypeMapping
+            contentType="com.javacc.lsp4e"
+            id="com.javacc.lsp4e">
+      </contentTypeMapping>
+   </extension>
+     
+</plugin>
