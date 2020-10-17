@@ -36,13 +36,23 @@ public class JavaCCPositionUtility {
 		}
 		return root.findNodeAt(position.getLine() + 1, position.getCharacter() + 1);
 	}
-	
+
 	public static boolean isEndSection(Node node) {
-		return false; //return node instanceof END_SECTION || node instanceof ENDIF|| node instanceof ENDFOR|| node instanceof ENDEACH;
+		return false; // return node instanceof END_SECTION || node instanceof ENDIF|| node instanceof
+						// ENDFOR|| node instanceof ENDEACH;
 	}
 
 	public static boolean isStartSection(Node node) {
-		return false;//return node instanceof START_SECTION || node instanceof IF || node instanceof FOR || node instanceof EACH;
+		return false;// return node instanceof START_SECTION || node instanceof IF || node instanceof
+						// FOR || node instanceof EACH;
+	}
+
+	public static LocationLink createLocationLink(Node origin, Node target) {
+		Range originSelectionRange = toRange(origin);
+		Range targetRange = toRange(target);
+		Range targetSelectionRange = targetRange;
+		String targetUri = target.getInputSource();
+		return new LocationLink(targetUri, targetRange, targetSelectionRange, originSelectionRange);
 	}
 
 }

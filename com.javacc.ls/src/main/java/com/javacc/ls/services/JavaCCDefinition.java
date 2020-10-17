@@ -11,24 +11,19 @@
 *******************************************************************************/
 package com.javacc.ls.services;
 
-import static com.javacc.ls.utils.JavaCCPositionUtility.isEndSection;
-import static com.javacc.ls.utils.JavaCCPositionUtility.isStartSection;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import org.eclipse.lsp4j.LocationLink;
 import org.eclipse.lsp4j.Position;
-import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.jsonrpc.CancelChecker;
 
-import com.javacc.ls.ls.commons.BadLocationException;
 import com.javacc.ls.parser.Template;
 import com.javacc.ls.utils.JavaCCPositionUtility;
+import com.javacc.ls.utils.JavaCCSearchUtils;
 import com.javacc.parser.Node;
+import com.javacc.parser.tree.Identifier;
 
 /**
  * Qute definition support.
@@ -36,54 +31,29 @@ import com.javacc.parser.Node;
  */
 class JavaCCDefinition {
 
-	private static final Logger LOGGER = Logger.getLogger(JavaCCDefinition.class.getName());
-
 	public List<? extends LocationLink> findDefinition(Template template, Position position,
 			CancelChecker cancelChecker) {
-		try {
-			Node node = JavaCCPositionUtility.findNodeAt(template, position);
-			if (node == null) {
-				return Collections.emptyList();
-			}
-			List<LocationLink> locations = new ArrayList<>();
-			// Start end tag definition
-			findStartEndTagDefinition(node, template, locations);
-			return locations;
-		} catch (BadLocationException e) {
-			LOGGER.log(Level.SEVERE, "In QuteDefinition the client provided Position is at a BadLocation", e);
+
+		Node node = JavaCCPositionUtility.findNodeAt(template, position);
+		if (node == null) {
 			return Collections.emptyList();
 		}
-
-	}
-
-	/**
-	 * Find start end tag definition.
-	 * 
-	 * @param document
-	 * @param template
-	 * 
-	 * @param request   the definition request
-	 * @param locations the locations
-	 * @throws BadLocationException
-	 */
-	private static void findStartEndTagDefinition(Node node, Template template, List<LocationLink> locations)
-			throws BadLocationException {
-		Node originNode = null;
-		Node targetNode = null;
-		if (isStartSection(node)) {
-			originNode = node;
-			Node section = originNode.getParent();
-			targetNode = section.getChild(section.getChildCount() - 1);
-		} else if (isEndSection(node)) {
-			originNode = node;
-			Node section = originNode.getParent();
-			targetNode = section.getChild(0);
+		if (!(node instanceof Identifier)) {
+			return Collections.emptyList();
 		}
-		if (originNode != null && targetNode != null) {
-			Range originRange = JavaCCPositionUtility.toRange(originNode);
-			Range targetRange = JavaCCPositionUtility.toRange(targetNode);
-			locations.add(new LocationLink(template.getId(), targetRange, targetRange, originRange));
+		Identifier identifier = (Identifier) node;
+		if (JavaCCSearchUtils.isProductionIdentifier(identifier)) {
+			return Collections.emptyList();
 		}
+		Identifier originIdentifier = JavaCCSearchUtils.searchOriginIdentifier(identifier);
+		if (originIdentifier != null) {
+			List<LocationLink> locations = new ArrayList<>();
+			LocationLink location = JavaCCPositionUtility.createLocationLink(identifier, originIdentifier);
+			locations.add(location);
+			return locations;
+		}
+		return Collections.emptyList();
+
 	}
 
 }

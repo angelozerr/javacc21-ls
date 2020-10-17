@@ -11,9 +11,6 @@
 *******************************************************************************/
 package com.javacc.ls.services;
 
-import static com.javacc.ls.utils.JavaCCPositionUtility.isEndSection;
-import static com.javacc.ls.utils.JavaCCPositionUtility.isStartSection;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -29,7 +26,10 @@ import org.eclipse.lsp4j.jsonrpc.CancelChecker;
 import com.javacc.ls.ls.commons.BadLocationException;
 import com.javacc.ls.parser.Template;
 import com.javacc.ls.utils.JavaCCPositionUtility;
+import com.javacc.ls.utils.JavaCCSearchUtils;
 import com.javacc.parser.Node;
+import com.javacc.parser.tree.BNFProduction;
+import com.javacc.parser.tree.Identifier;
 
 class JavaCCHighlighting {
 
@@ -42,8 +42,11 @@ class JavaCCHighlighting {
 			if (node == null) {
 				return Collections.emptyList();
 			}
+			if (!(node instanceof Identifier)) {
+				return Collections.emptyList();
+			}
 			List<DocumentHighlight> highlights = new ArrayList<>();
-			fillWithDefaultHighlights(node, position, highlights, cancelChecker);
+			fillWithDefaultHighlights((Identifier) node, template.getRoot(), position, highlights, cancelChecker);
 			return highlights;
 		} catch (BadLocationException e) {
 			LOGGER.log(Level.SEVERE, "In JavaCCHighlighting the client provided Position is at a BadLocation", e);
@@ -51,49 +54,25 @@ class JavaCCHighlighting {
 		}
 	}
 
-	private static void fillWithDefaultHighlights(Node node, Position position, List<DocumentHighlight> highlights,
-			CancelChecker cancelChecker) throws BadLocationException {
-		Node originNode = null;
-		Node targetNode = null;
-		if (isStartSection(node)) {
-			originNode = node;
-			Node section = originNode.getParent();
-			targetNode = section.getChild(section.getChildCount() - 1);
-		} else if (isEndSection(node)) {
-			originNode = node;
-			Node section = originNode.getParent();
-			targetNode = section.getChild(0);
-		}
-		if (originNode != null && targetNode != null) {
-			Range startTagRange = JavaCCPositionUtility.toRange(originNode);
-			Range endTagRange = JavaCCPositionUtility.toRange(targetNode);
-			if (doesTagCoverPosition(startTagRange, endTagRange, position)) {
-				fillHighlightsList(startTagRange, endTagRange, highlights);
+	private static void fillWithDefaultHighlights(Identifier identifier, Node root, Position position,
+			List<DocumentHighlight> highlights, CancelChecker cancelChecker) throws BadLocationException {
+		if (JavaCCSearchUtils.isProductionIdentifier(identifier)) {
+			Range originRange = JavaCCPositionUtility.toRange(identifier);
+			highlights.add(new DocumentHighlight(originRange, DocumentHighlightKind.Read));
+			JavaCCSearchUtils.searchReferencedIdentifiers(identifier, targetNode -> {
+				Range targetRange = JavaCCPositionUtility.toRange(targetNode);
+				highlights.add(new DocumentHighlight(targetRange, DocumentHighlightKind.Write));
+			});
+		} else {
+			Range targetRange = JavaCCPositionUtility.toRange(identifier);
+			highlights.add(new DocumentHighlight(targetRange, DocumentHighlightKind.Write));
+			Identifier originIdentifier = JavaCCSearchUtils.searchOriginIdentifier(identifier);
+			if (originIdentifier != null) {
+				Range orignRange = JavaCCPositionUtility.toRange(originIdentifier);
+				highlights.add(new DocumentHighlight(orignRange, DocumentHighlightKind.Read));
 			}
 		}
-	}
 
-	private static void fillHighlightsList(Range startTagRange, Range endTagRange, List<DocumentHighlight> result) {
-		if (startTagRange != null) {
-			result.add(new DocumentHighlight(startTagRange, DocumentHighlightKind.Read));
-		}
-		if (endTagRange != null) {
-			result.add(new DocumentHighlight(endTagRange, DocumentHighlightKind.Read));
-		}
-	}
-
-	public static boolean doesTagCoverPosition(Range startTagRange, Range endTagRange, Position position) {
-		return startTagRange != null && covers(startTagRange, position)
-				|| endTagRange != null && covers(endTagRange, position);
-	}
-
-	public static boolean covers(Range range, Position position) {
-		return isBeforeOrEqual(range.getStart(), position) && isBeforeOrEqual(position, range.getEnd());
-	}
-
-	public static boolean isBeforeOrEqual(Position pos1, Position pos2) {
-		return pos1.getLine() < pos2.getLine()
-				|| (pos1.getLine() == pos2.getLine() && pos1.getCharacter() <= pos2.getCharacter());
 	}
 
 }
