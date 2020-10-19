@@ -7,15 +7,19 @@
  *******************************************************************************/
 package com.javacc.ls.settings.capabilities;
 
+import static com.javacc.ls.settings.capabilities.ServerCapabilitiesConstants.CODE_LENS_ID;
 import static com.javacc.ls.settings.capabilities.ServerCapabilitiesConstants.COMPLETION_ID;
 import static com.javacc.ls.settings.capabilities.ServerCapabilitiesConstants.DEFAULT_COMPLETION_OPTIONS;
 import static com.javacc.ls.settings.capabilities.ServerCapabilitiesConstants.DOCUMENT_DEFINITION_ID;
 import static com.javacc.ls.settings.capabilities.ServerCapabilitiesConstants.DOCUMENT_HIGHLIGHT_ID;
 import static com.javacc.ls.settings.capabilities.ServerCapabilitiesConstants.DOCUMENT_SYMBOL_ID;
+import static com.javacc.ls.settings.capabilities.ServerCapabilitiesConstants.REFERENCES_ID;
+import static com.javacc.ls.settings.capabilities.ServerCapabilitiesConstants.TEXT_DOCUMENT_CODE_LENS;
 import static com.javacc.ls.settings.capabilities.ServerCapabilitiesConstants.TEXT_DOCUMENT_COMPLETION;
 import static com.javacc.ls.settings.capabilities.ServerCapabilitiesConstants.TEXT_DOCUMENT_DEFINITION;
 import static com.javacc.ls.settings.capabilities.ServerCapabilitiesConstants.TEXT_DOCUMENT_DOCUMENT_SYMBOL;
 import static com.javacc.ls.settings.capabilities.ServerCapabilitiesConstants.TEXT_DOCUMENT_HIGHLIGHT;
+import static com.javacc.ls.settings.capabilities.ServerCapabilitiesConstants.TEXT_DOCUMENT_REFERENCES;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -31,14 +35,14 @@ import com.javacc.ls.ls.commons.client.ExtendedClientCapabilities;
 /**
  * Manages dynamic capabilities
  */
-public class QuteCapabilityManager {
+public class JavaCCCapabilityManager {
 
 	private final Set<String> registeredCapabilities = new HashSet<>(3);
 	private final LanguageClient languageClient;
 
 	private ClientCapabilitiesWrapper clientWrapper;
 
-	public QuteCapabilityManager(LanguageClient languageClient) {
+	public JavaCCCapabilityManager(LanguageClient languageClient) {
 		this.languageClient = languageClient;
 	}
 
@@ -53,11 +57,17 @@ public class QuteCapabilityManager {
 		if (this.getClientCapabilities().isDefinitionDynamicRegistered()) {
 			registerCapability(DOCUMENT_DEFINITION_ID, TEXT_DOCUMENT_DEFINITION);
 		}
+		if (this.getClientCapabilities().isReferencesDynamicRegistrationSupported()) {
+			registerCapability(REFERENCES_ID, TEXT_DOCUMENT_REFERENCES);
+		}
 		if (this.getClientCapabilities().isDocumentSymbolDynamicRegistrationSupported()) {
 			registerCapability(DOCUMENT_SYMBOL_ID, TEXT_DOCUMENT_DOCUMENT_SYMBOL);
 		}
 		if (this.getClientCapabilities().isCompletionDynamicRegistrationSupported()) {
 			registerCapability(COMPLETION_ID, TEXT_DOCUMENT_COMPLETION, DEFAULT_COMPLETION_OPTIONS);
+		}
+		if (this.getClientCapabilities().isCodeLensDynamicRegistered()) {
+			registerCapability(CODE_LENS_ID, TEXT_DOCUMENT_CODE_LENS);
 		}
 		/*
 		 * if (this.getClientCapabilities().isCodeActionDynamicRegistered()) {

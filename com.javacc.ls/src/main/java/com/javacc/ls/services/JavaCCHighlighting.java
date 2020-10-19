@@ -28,7 +28,6 @@ import com.javacc.ls.parser.Template;
 import com.javacc.ls.utils.JavaCCPositionUtility;
 import com.javacc.ls.utils.JavaCCSearchUtils;
 import com.javacc.parser.Node;
-import com.javacc.parser.tree.BNFProduction;
 import com.javacc.parser.tree.Identifier;
 
 class JavaCCHighlighting {

@@ -14,6 +14,6 @@ package com.javacc.ls.settings;
 /**
  * Qute formatting settings
  */
-public class QuteFormattingSettings {
+public class JavaCCFormattingSettings {
 
 }

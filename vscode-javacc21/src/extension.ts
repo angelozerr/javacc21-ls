@@ -15,19 +15,11 @@
  */
 import * as requirements from './languageServer/requirements';
 
-import { VSCodeCommands } from './definitions/constants';
-
-import { DidChangeConfigurationNotification, LanguageClientOptions, LanguageClient } from 'vscode-languageclient';
-import { ExtensionContext, commands, window, workspace } from 'vscode';
-import { QuarkusContext } from './QuarkusContext';
-import { addExtensionsWizard } from './addExtensions/addExtensionsWizard';
-import { createTerminateDebugListener } from './debugging/terminateProcess';
-import { generateProjectWizard } from './generateProject/generationWizard';
+import { DidChangeConfigurationNotification, LanguageClientOptions, LanguageClient, ReferencesRequest } from 'vscode-languageclient';
+import { ExtensionContext, commands, window, workspace, Uri, Position } from 'vscode';
 import { prepareJavaCC21Executable } from './languageServer/javaServerStarter';
-import { tryStartDebugging } from './debugging/startDebugging';
-import { WelcomeWebview } from './webviews/WelcomeWebview';
-import { QuarkusConfig } from './QuarkusConfig';
 import { registerConfigurationUpdateCommand, registerOpenURICommand, CommandKind } from './lsp-commands';
+import { Commands } from './commands';
 
 let languageClient: LanguageClient;
 
@@ -45,7 +37,7 @@ export function activate(context: ExtensionContext) {
 
   function bindRequest(request: string) {
     languageClient.onRequest(request, async (params: any) =>
-      <any> await commands.executeCommand("java.execute.workspaceCommand", request, params)
+      <any>await commands.executeCommand("java.execute.workspaceCommand", request, params)
     );
   }
 
@@ -63,7 +55,7 @@ function connectToJavaCC21LS(context: ExtensionContext) {
   return requirements.resolveRequirements().then(requirements => {
     const clientOptions: LanguageClientOptions = {
       documentSelector: [
-        { scheme: 'file', language: 'javacc21' }      ],
+        { scheme: 'file', language: 'javacc21' }],
       // wrap with key 'settings' so it can be handled same a DidChangeConfiguration
       initializationOptions: {
         settings: getJavaCC21Settings()
@@ -84,7 +76,20 @@ function connectToJavaCC21LS(context: ExtensionContext) {
     const serverOptions = prepareJavaCC21Executable(requirements);
     languageClient = new LanguageClient('javacc21', 'JavaCC 21 Support', serverOptions, clientOptions);
     context.subscriptions.push(languageClient.start());
-    return languageClient.onReady();
+    return languageClient.onReady().then(() => {
+
+      // Code Lens actions
+      context.subscriptions.push(commands.registerCommand(Commands.SHOW_REFERENCES, (uriString: string, position: Position) => {
+        const uri = Uri.parse(uriString);
+        workspace.openTextDocument(uri).then(document => {
+          // Consume references service from the XML Language Server
+          const param = languageClient.code2ProtocolConverter.asTextDocumentPositionParams(document, position);
+          languageClient.sendRequest(ReferencesRequest.type, param).then(locations => {
+            commands.executeCommand(Commands.EDITOR_SHOW_REFERENCES, uri, languageClient.protocol2CodeConverter.asPosition(position), locations.map(languageClient.protocol2CodeConverter.asLocation));
+          });
+        });
+      }));
+    });
   });
 
   /**
@@ -108,7 +113,7 @@ function connectToJavaCC21LS(context: ExtensionContext) {
       quarkus = defaultValue;
     } else {
       const x = JSON.stringify(configQuarkus); // configQuarkus is not a JSON type
-      quarkus = { quarkus : JSON.parse(x)};
+      quarkus = { quarkus: JSON.parse(x) };
     }
     return quarkus;
   }

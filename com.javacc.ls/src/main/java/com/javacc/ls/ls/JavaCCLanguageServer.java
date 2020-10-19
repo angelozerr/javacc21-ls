@@ -24,21 +24,21 @@ import org.eclipse.lsp4j.services.LanguageServer;
 import org.eclipse.lsp4j.services.TextDocumentService;
 import org.eclipse.lsp4j.services.WorkspaceService;
 
-import com.javacc.ls.ls.api.QuteLanguageClientAPI;
-import com.javacc.ls.ls.api.QuteLanguageServerAPI;
+import com.javacc.ls.ls.api.JavaCCLanguageClientAPI;
+import com.javacc.ls.ls.api.JavaCCLanguageServerAPI;
 import com.javacc.ls.ls.commons.ParentProcessWatcher.ProcessLanguageServer;
 import com.javacc.ls.ls.commons.client.ExtendedClientCapabilities;
 import com.javacc.ls.ls.commons.client.InitializationOptionsExtendedClientCapabilities;
 import com.javacc.ls.services.JavaCCLanguageService;
 import com.javacc.ls.settings.SharedSettings;
-import com.javacc.ls.settings.capabilities.QuteCapabilityManager;
+import com.javacc.ls.settings.capabilities.JavaCCCapabilityManager;
 import com.javacc.ls.settings.capabilities.ServerCapabilitiesInitializer;
 
 /**
  * Qute language server.
  *
  */
-public class JavaCCLanguageServer implements LanguageServer, ProcessLanguageServer, QuteLanguageServerAPI {
+public class JavaCCLanguageServer implements LanguageServer, ProcessLanguageServer, JavaCCLanguageServerAPI {
 
 	private static final Logger LOGGER = Logger.getLogger(JavaCCLanguageServer.class.getName());
 
@@ -47,8 +47,8 @@ public class JavaCCLanguageServer implements LanguageServer, ProcessLanguageServ
 	private final WorkspaceService workspaceService;
 
 	private Integer parentProcessId;
-	private QuteLanguageClientAPI languageClient;
-	private QuteCapabilityManager capabilityManager;
+	private JavaCCLanguageClientAPI languageClient;
+	private JavaCCCapabilityManager capabilityManager;
 
 	public JavaCCLanguageServer() {
 		quteLanguageService = new JavaCCLanguageService();
@@ -58,7 +58,7 @@ public class JavaCCLanguageServer implements LanguageServer, ProcessLanguageServ
 
 	@Override
 	public CompletableFuture<InitializeResult> initialize(InitializeParams params) {
-		LOGGER.info("Initializing Qute server " + getVersion() + " with " + System.getProperty("java.home"));
+		LOGGER.info("Initializing JavaCC server " + getVersion() + " with " + System.getProperty("java.home"));
 
 		this.parentProcessId = params.getProcessId();
 
@@ -111,17 +111,17 @@ public class JavaCCLanguageServer implements LanguageServer, ProcessLanguageServ
 		return this.workspaceService;
 	}
 
-	public QuteLanguageClientAPI getLanguageClient() {
+	public JavaCCLanguageClientAPI getLanguageClient() {
 		return languageClient;
 	}
 
-	public QuteCapabilityManager getCapabilityManager() {
+	public JavaCCCapabilityManager getCapabilityManager() {
 		return capabilityManager;
 	}
 
 	public void setClient(LanguageClient languageClient) {
-		this.languageClient = (QuteLanguageClientAPI) languageClient;
-		this.capabilityManager = new QuteCapabilityManager(languageClient);
+		this.languageClient = (JavaCCLanguageClientAPI) languageClient;
+		this.capabilityManager = new JavaCCCapabilityManager(languageClient);
 	}
 
 	@Override
@@ -129,7 +129,7 @@ public class JavaCCLanguageServer implements LanguageServer, ProcessLanguageServ
 		return parentProcessId != null ? parentProcessId : 0;
 	}
 
-	public JavaCCLanguageService getQuarkusLanguageService() {
+	public JavaCCLanguageService getJavaCCLanguageService() {
 		return quteLanguageService;
 	}
 

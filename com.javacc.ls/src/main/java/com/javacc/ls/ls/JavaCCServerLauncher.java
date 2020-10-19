@@ -21,7 +21,7 @@ import org.eclipse.lsp4j.launch.LSPLauncher.Builder;
 import org.eclipse.lsp4j.services.LanguageClient;
 import org.eclipse.lsp4j.services.LanguageServer;
 
-import com.javacc.ls.ls.api.QuteLanguageClientAPI;
+import com.javacc.ls.ls.api.JavaCCLanguageClientAPI;
 import com.javacc.ls.ls.commons.ParentProcessWatcher;
 
 /**
@@ -61,7 +61,7 @@ public class JavaCCServerLauncher {
 	 */
 	public static Launcher<LanguageClient> createServerLauncher(LanguageServer server, InputStream in, OutputStream out,
 			ExecutorService executorService, Function<MessageConsumer, MessageConsumer> wrapper) {
-		return new Builder<LanguageClient>().setLocalService(server).setRemoteInterface(QuteLanguageClientAPI.class) // Set
+		return new Builder<LanguageClient>().setLocalService(server).setRemoteInterface(JavaCCLanguageClientAPI.class) // Set
 																														// client
 																														// as
 																														// Quarkus

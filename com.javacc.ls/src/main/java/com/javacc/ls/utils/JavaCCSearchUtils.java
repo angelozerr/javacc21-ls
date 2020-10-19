@@ -17,7 +17,11 @@ public class JavaCCSearchUtils {
 		if (parent == null) {
 			return false;
 		}
-		return parent instanceof BNFProduction || parent instanceof TokenProduction;
+		return isProductionNode(parent);
+	}
+
+	public static boolean isProductionNode(Node node) {
+		return node instanceof BNFProduction || node instanceof TokenProduction;
 	}
 
 	public static void searchReferencedIdentifiers(Identifier identifier, Consumer<Identifier> collector) {

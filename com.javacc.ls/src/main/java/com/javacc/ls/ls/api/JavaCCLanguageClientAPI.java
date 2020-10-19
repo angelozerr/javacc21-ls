@@ -9,14 +9,14 @@
 *******************************************************************************/
 package com.javacc.ls.ls.api;
 
-import org.eclipse.lsp4j.services.LanguageServer;
+import org.eclipse.lsp4j.services.LanguageClient;
 
 /**
- * Qute language server API.
+ * JavaCC language client API.
  * 
  * @author Angelo ZERR
  *
  */
-public interface QuteLanguageServerAPI extends LanguageServer {
+public interface JavaCCLanguageClientAPI extends LanguageClient {
 
 }

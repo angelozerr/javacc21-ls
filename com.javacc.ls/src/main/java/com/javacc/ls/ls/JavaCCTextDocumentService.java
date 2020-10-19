@@ -10,6 +10,7 @@
 package com.javacc.ls.ls;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
@@ -17,6 +18,8 @@ import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import org.eclipse.lsp4j.ClientCapabilities;
+import org.eclipse.lsp4j.CodeLens;
+import org.eclipse.lsp4j.CodeLensParams;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionList;
 import org.eclipse.lsp4j.CompletionParams;
@@ -31,6 +34,7 @@ import org.eclipse.lsp4j.DocumentSymbolParams;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.LocationLink;
 import org.eclipse.lsp4j.PublishDiagnosticsParams;
+import org.eclipse.lsp4j.ReferenceParams;
 import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.TextDocumentClientCapabilities;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
@@ -44,7 +48,7 @@ import com.javacc.ls.ls.commons.ModelTextDocuments;
 import com.javacc.ls.parser.JavaCCParserWrapper;
 import com.javacc.ls.parser.Template;
 import com.javacc.ls.services.JavaCCLanguageService;
-import com.javacc.ls.settings.QuteValidationSettings;
+import com.javacc.ls.settings.JavaCCValidationSettings;
 import com.javacc.ls.settings.SharedSettings;
 import com.javacc.ls.utils.JavaCCPositionUtility;
 
@@ -56,7 +60,7 @@ public class JavaCCTextDocumentService implements TextDocumentService {
 
 	private final ModelTextDocuments<Template> documents;
 
-	private final JavaCCLanguageServer quteLanguageServer;
+	private final JavaCCLanguageServer javaccLanguageServer;
 
 	private final SharedSettings sharedSettings;
 
@@ -64,10 +68,11 @@ public class JavaCCTextDocumentService implements TextDocumentService {
 
 	private boolean definitionLinkSupport;
 
-	public JavaCCTextDocumentService(JavaCCLanguageServer quteLanguageServer, SharedSettings sharedSettings) {
-		this.quteLanguageServer = quteLanguageServer;
+	public JavaCCTextDocumentService(JavaCCLanguageServer javaccLanguageServer, SharedSettings sharedSettings) {
+		this.javaccLanguageServer = javaccLanguageServer;
 		this.documents = new ModelTextDocuments<Template>((document, cancelChecker) -> {
-			return JavaCCParserWrapper.parse(document.getText(), document.getUri(), () -> cancelChecker.checkCanceled());
+			return JavaCCParserWrapper.parse(document.getText(), document.getUri(),
+					() -> cancelChecker.checkCanceled());
 		});
 		this.sharedSettings = sharedSettings;
 	}
@@ -107,7 +112,7 @@ public class JavaCCTextDocumentService implements TextDocumentService {
 		documents.onDidCloseTextDocument(params);
 		TextDocumentIdentifier document = params.getTextDocument();
 		String uri = document.getUri();
-		quteLanguageServer.getLanguageClient()
+		javaccLanguageServer.getLanguageClient()
 				.publishDiagnostics(new PublishDiagnosticsParams(uri, new ArrayList<Diagnostic>()));
 	}
 
@@ -118,16 +123,35 @@ public class JavaCCTextDocumentService implements TextDocumentService {
 
 	public CompletableFuture<Either<List<CompletionItem>, CompletionList>> completion(CompletionParams params) {
 		return getTemplate(params.getTextDocument(), (cancelChecker, template) -> {
-			CompletionList list = getQuteLanguageService().doComplete(template, params.getPosition(),
+			CompletionList list = getJavaCCLanguageService().doComplete(template, params.getPosition(),
 					sharedSettings.getCompletionSettings(), sharedSettings.getFormattingSettings(), cancelChecker);
 			return Either.forRight(list);
 		});
 	}
 
 	@Override
+	public CompletableFuture<List<? extends Location>> references(ReferenceParams params) {
+		return getTemplate(params.getTextDocument(), (cancelChecker, template) -> {
+			return getJavaCCLanguageService().findReferences(template, params.getPosition(), params.getContext(),
+					cancelChecker);
+		});
+	}
+
+	@Override
+	public CompletableFuture<List<? extends CodeLens>> codeLens(CodeLensParams params) {
+		if (!sharedSettings.getCodeLensSettings().isEnabled()) {
+			return CompletableFuture.completedFuture(Collections.emptyList());
+		}
+		return getTemplate(params.getTextDocument(), (cancelChecker, template) -> {
+			return getJavaCCLanguageService().getCodeLens(template, sharedSettings.getCodeLensSettings(),
+					cancelChecker);
+		});
+	}
+
+	@Override
 	public CompletableFuture<List<? extends DocumentHighlight>> documentHighlight(TextDocumentPositionParams params) {
 		return getTemplate(params.getTextDocument(), (cancelChecker, template) -> {
-			return getQuteLanguageService().findDocumentHighlights(template, params.getPosition(), cancelChecker);
+			return getJavaCCLanguageService().findDocumentHighlights(template, params.getPosition(), cancelChecker);
 		});
 	}
 
@@ -137,9 +161,9 @@ public class JavaCCTextDocumentService implements TextDocumentService {
 		return getTemplate(params.getTextDocument(), (cancelChecker, template) -> {
 			if (definitionLinkSupport) {
 				return Either.forRight(
-						getQuteLanguageService().findDefinition(template, params.getPosition(), cancelChecker));
+						getJavaCCLanguageService().findDefinition(template, params.getPosition(), cancelChecker));
 			}
-			List<? extends Location> locations = getQuteLanguageService()
+			List<? extends Location> locations = getJavaCCLanguageService()
 					.findDefinition(template, params.getPosition(), cancelChecker) //
 					.stream() //
 					.map(locationLink -> JavaCCPositionUtility.toLocation(locationLink)) //
@@ -152,7 +176,7 @@ public class JavaCCTextDocumentService implements TextDocumentService {
 			DocumentSymbolParams params) {
 		return getTemplate(params.getTextDocument(), (cancelChecker, template) -> {
 			if (hierarchicalDocumentSymbolSupport) {
-				return getQuteLanguageService().findDocumentSymbols(template, cancelChecker) //
+				return getJavaCCLanguageService().findDocumentSymbols(template, cancelChecker) //
 						.stream() //
 						.map(s -> {
 							Either<SymbolInformation, DocumentSymbol> e = Either.forRight(s);
@@ -160,7 +184,7 @@ public class JavaCCTextDocumentService implements TextDocumentService {
 						}) //
 						.collect(Collectors.toList());
 			}
-			return getQuteLanguageService().findSymbolInformations(template, cancelChecker) //
+			return getJavaCCLanguageService().findSymbolInformations(template, cancelChecker) //
 					.stream() //
 					.map(s -> {
 						Either<SymbolInformation, DocumentSymbol> e = Either.forLeft(s);
@@ -170,15 +194,15 @@ public class JavaCCTextDocumentService implements TextDocumentService {
 		});
 	}
 
-	private JavaCCLanguageService getQuteLanguageService() {
-		return quteLanguageServer.getQuarkusLanguageService();
+	private JavaCCLanguageService getJavaCCLanguageService() {
+		return javaccLanguageServer.getJavaCCLanguageService();
 	}
 
 	private void triggerValidationFor(ModelTextDocument<Template> document) {
 		getTemplate(document, (cancelChecker, template) -> {
-			List<Diagnostic> diagnostics = getQuteLanguageService().doDiagnostics(template, document,
+			List<Diagnostic> diagnostics = getJavaCCLanguageService().doDiagnostics(template, document,
 					getSharedSettings().getValidationSettings(), cancelChecker);
-			quteLanguageServer.getLanguageClient()
+			javaccLanguageServer.getLanguageClient()
 					.publishDiagnostics(new PublishDiagnosticsParams(template.getId(), diagnostics));
 			return null;
 		});
@@ -240,9 +264,9 @@ public class JavaCCTextDocumentService implements TextDocumentService {
 		return result;
 	}
 
-	public void updateValidationSettings(QuteValidationSettings newValidation) {
+	public void updateValidationSettings(JavaCCValidationSettings newValidation) {
 		// Update validation settings
-		QuteValidationSettings validation = sharedSettings.getValidationSettings();
+		JavaCCValidationSettings validation = sharedSettings.getValidationSettings();
 		validation.update(newValidation);
 		// trigger validation for all opened application.properties
 		documents.all().stream().forEach(document -> {

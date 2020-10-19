@@ -23,7 +23,7 @@ import org.eclipse.lsp4j.jsonrpc.CancelChecker;
 
 import com.javacc.ls.ls.commons.TextDocument;
 import com.javacc.ls.parser.Template;
-import com.javacc.ls.settings.QuteValidationSettings;
+import com.javacc.ls.settings.JavaCCValidationSettings;
 import com.javacc.parser.ParseException;
 import com.javacc.parser.Token;
 
@@ -43,9 +43,9 @@ class JavaCCDiagnostics {
 	 * @return the result of the validation.
 	 */
 	public List<Diagnostic> doDiagnostics(Template template, TextDocument document,
-			QuteValidationSettings validationSettings, CancelChecker cancelChecker) {
+			JavaCCValidationSettings validationSettings, CancelChecker cancelChecker) {
 		if (validationSettings == null) {
-			validationSettings = QuteValidationSettings.DEFAULT;
+			validationSettings = JavaCCValidationSettings.DEFAULT;
 		}
 		List<Diagnostic> diagnostics = new ArrayList<Diagnostic>();
 		ParseException parseException = template.getParseException();

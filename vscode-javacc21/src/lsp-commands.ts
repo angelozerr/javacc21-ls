@@ -17,10 +17,10 @@
 import { ConfigurationTarget, Disposable, commands, workspace, Uri } from 'vscode';
 
 export namespace CommandKind {
-  export const COMMAND_REFERENCES = 'quarkus.command.references';
-  export const COMMAND_IMPLEMENTATIONS = 'quarkus.command.implementations';
-  export const COMMAND_OPEN_URI = 'quarkus.command.open.uri';
-  export const COMMAND_CONFIGURATION_UPDATE = 'quarkus.command.configuration.update';
+  export const COMMAND_REFERENCES = 'javacc.command.references';
+  export const COMMAND_IMPLEMENTATIONS = 'javacc.command.implementations';
+  export const COMMAND_OPEN_URI = 'javacc.command.open.uri';
+  export const COMMAND_CONFIGURATION_UPDATE = 'javacc.command.configuration.update';
 }
 
 /**

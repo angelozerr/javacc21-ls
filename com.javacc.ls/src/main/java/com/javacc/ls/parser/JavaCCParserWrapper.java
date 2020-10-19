@@ -26,7 +26,10 @@ public class JavaCCParserWrapper {
 		Template template = new Template(templateId);
 		
 		Grammar grammar = new Grammar(new JavaCCOptions(new String[] { templateId }));
+		grammar.setFilename(templateId.replace("file:///", "").replace("file://", ""));
+
 		JavaCCParser parser = new JavaCCParser(grammar, templateId, content);
+		parser.setEnterIncludes(false);
 
 		//parser.setParserTolerant(true);
 		 parser.setBuildTree(true);

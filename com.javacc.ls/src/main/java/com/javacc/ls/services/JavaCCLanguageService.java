@@ -13,20 +13,24 @@ package com.javacc.ls.services;
 
 import java.util.List;
 
+import org.eclipse.lsp4j.CodeLens;
 import org.eclipse.lsp4j.CompletionList;
 import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.DocumentHighlight;
 import org.eclipse.lsp4j.DocumentSymbol;
+import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.LocationLink;
 import org.eclipse.lsp4j.Position;
+import org.eclipse.lsp4j.ReferenceContext;
 import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.jsonrpc.CancelChecker;
 
 import com.javacc.ls.ls.commons.TextDocument;
 import com.javacc.ls.parser.Template;
-import com.javacc.ls.settings.QuteCompletionSettings;
-import com.javacc.ls.settings.QuteFormattingSettings;
-import com.javacc.ls.settings.QuteValidationSettings;
+import com.javacc.ls.settings.JavaCCCodeLensSettings;
+import com.javacc.ls.settings.JavaCCCompletionSettings;
+import com.javacc.ls.settings.JavaCCFormattingSettings;
+import com.javacc.ls.settings.JavaCCValidationSettings;
 
 /**
  * The Qute language service.
@@ -37,15 +41,19 @@ import com.javacc.ls.settings.QuteValidationSettings;
 public class JavaCCLanguageService {
 
 	private final JavaCCCompletions completions;
+	private final JavaCCCodeLens codelens;
 	private final JavaCCHighlighting highlighting;
 	private final JavaCCDefinition definition;
+	private final JavaCCReference references;
 	private final JavaCCSymbolsProvider symbolsProvider;
 	private final JavaCCDiagnostics diagnostics;
 
 	public JavaCCLanguageService() {
 		this.completions = new JavaCCCompletions();
+		this.codelens = new JavaCCCodeLens();
 		this.highlighting = new JavaCCHighlighting();
 		this.definition = new JavaCCDefinition();
+		this.references = new JavaCCReference();
 		this.symbolsProvider = new JavaCCSymbolsProvider();
 		this.diagnostics = new JavaCCDiagnostics();
 	}
@@ -60,8 +68,8 @@ public class JavaCCLanguageService {
 	 * @param cancelChecker      the cancel checker
 	 * @return completion list for the given position
 	 */
-	public CompletionList doComplete(Template template, Position position, QuteCompletionSettings completionSettings,
-			QuteFormattingSettings formattingSettings, CancelChecker cancelChecker) {
+	public CompletionList doComplete(Template template, Position position, JavaCCCompletionSettings completionSettings,
+			JavaCCFormattingSettings formattingSettings, CancelChecker cancelChecker) {
 		return completions.doComplete(template, position, completionSettings, formattingSettings, cancelChecker);
 	}
 
@@ -93,8 +101,17 @@ public class JavaCCLanguageService {
 	 * @return the result of the validation.
 	 */
 	public List<Diagnostic> doDiagnostics(Template template, TextDocument document,
-			QuteValidationSettings validationSettings, CancelChecker cancelChecker) {
+			JavaCCValidationSettings validationSettings, CancelChecker cancelChecker) {
 		return diagnostics.doDiagnostics(template, document, validationSettings, cancelChecker);
 	}
 
+	public List<? extends CodeLens> getCodeLens(Template template, JavaCCCodeLensSettings codeLensSettings,
+			CancelChecker cancelChecker) {
+		return codelens.getCodeLens(template, codeLensSettings, cancelChecker);
+	}
+
+	public List<? extends Location> findReferences(Template template, Position position, ReferenceContext context,
+			CancelChecker cancelChecker) {
+		return references.findReferences(template, position, context, cancelChecker);
+	}
 }

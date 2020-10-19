@@ -12,20 +12,23 @@
 package com.javacc.ls.settings;
 
 /**
- * Qute shared settings.
+ * JavaCC shared settings.
  * 
  * @author Angelo ZERR
  *
  */
 public class SharedSettings {
-	private final QuteCompletionSettings completionSettings;
-	private final QuteFormattingSettings formattingSettings;
-	private final QuteValidationSettings validationSettings;
+
+	private final JavaCCCompletionSettings completionSettings;
+	private final JavaCCCodeLensSettings codeLensSettings;
+	private final JavaCCFormattingSettings formattingSettings;
+	private final JavaCCValidationSettings validationSettings;
 
 	public SharedSettings() {
-		this.completionSettings = new QuteCompletionSettings();
-		this.formattingSettings = new QuteFormattingSettings();
-		this.validationSettings = new QuteValidationSettings();
+		this.completionSettings = new JavaCCCompletionSettings();
+		this.codeLensSettings = new JavaCCCodeLensSettings();
+		this.formattingSettings = new JavaCCFormattingSettings();
+		this.validationSettings = new JavaCCValidationSettings();
 	}
 
 	/**
@@ -33,8 +36,17 @@ public class SharedSettings {
 	 * 
 	 * @return the completion settings.
 	 */
-	public QuteCompletionSettings getCompletionSettings() {
+	public JavaCCCompletionSettings getCompletionSettings() {
 		return completionSettings;
+	}
+
+	/**
+	 * Returns the codelens settings.
+	 * 
+	 * @return the codelens settings.
+	 */
+	public JavaCCCodeLensSettings getCodeLensSettings() {
+		return codeLensSettings;
 	}
 
 	/**
@@ -42,7 +54,7 @@ public class SharedSettings {
 	 * 
 	 * @return the formatting settings.
 	 */
-	public QuteFormattingSettings getFormattingSettings() {
+	public JavaCCFormattingSettings getFormattingSettings() {
 		return formattingSettings;
 	}
 
@@ -51,7 +63,7 @@ public class SharedSettings {
 	 * 
 	 * @return the validation settings.
 	 */
-	public QuteValidationSettings getValidationSettings() {
+	public JavaCCValidationSettings getValidationSettings() {
 		return validationSettings;
 	}
 

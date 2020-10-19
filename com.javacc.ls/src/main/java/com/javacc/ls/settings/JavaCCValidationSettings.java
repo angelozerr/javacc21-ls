@@ -15,12 +15,12 @@ package com.javacc.ls.settings;
  * @author Angelo ZERR
  *
  */
-public class QuteValidationSettings {
+public class JavaCCValidationSettings {
 
-	public static final QuteValidationSettings DEFAULT;
+	public static final JavaCCValidationSettings DEFAULT;
 
 	static {
-		DEFAULT = new QuteValidationSettings();
+		DEFAULT = new JavaCCValidationSettings();
 		DEFAULT.updateDefault();
 	}
 
@@ -28,7 +28,7 @@ public class QuteValidationSettings {
 
 	private boolean enabled;
 
-	public QuteValidationSettings() {
+	public JavaCCValidationSettings() {
 		setEnabled(true);
 	}
 
@@ -65,7 +65,7 @@ public class QuteValidationSettings {
 	 * 
 	 * @param newValidation the new validation settings.
 	 */
-	public void update(QuteValidationSettings newValidation) {
+	public void update(JavaCCValidationSettings newValidation) {
 		this.setEnabled(newValidation.isEnabled());
 	}
 }

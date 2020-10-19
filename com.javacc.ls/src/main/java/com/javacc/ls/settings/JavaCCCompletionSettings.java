@@ -17,7 +17,7 @@ import org.eclipse.lsp4j.CompletionCapabilities;
  * A wrapper around LSP {@link CompletionCapabilities}.
  *
  */
-public class QuteCompletionSettings {
+public class JavaCCCompletionSettings {
 
 	private CompletionCapabilities completionCapabilities;
 

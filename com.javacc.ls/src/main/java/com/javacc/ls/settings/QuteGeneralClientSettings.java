@@ -27,14 +27,14 @@ import com.javacc.ls.utils.JSONUtility;
  * 
  */
 public class QuteGeneralClientSettings {
-	private QuteValidationSettings validation;
+	private JavaCCValidationSettings validation;
 
 	/**
 	 * Returns the validation settings.
 	 * 
 	 * @return the validation settings.
 	 */
-	public QuteValidationSettings getValidation() {
+	public JavaCCValidationSettings getValidation() {
 		return validation;
 	}
 
@@ -43,7 +43,7 @@ public class QuteGeneralClientSettings {
 	 * 
 	 * @param validation the validation settings.
 	 */
-	public void setValidation(QuteValidationSettings validation) {
+	public void setValidation(JavaCCValidationSettings validation) {
 		this.validation = validation;
 	}
 

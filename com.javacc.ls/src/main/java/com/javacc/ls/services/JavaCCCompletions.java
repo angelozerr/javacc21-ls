@@ -23,8 +23,8 @@ import com.javacc.ls.ls.commons.BadLocationException;
 import com.javacc.ls.ls.commons.snippets.ISnippetLineContext;
 import com.javacc.ls.ls.commons.snippets.SnippetRegistry;
 import com.javacc.ls.parser.Template;
-import com.javacc.ls.settings.QuteCompletionSettings;
-import com.javacc.ls.settings.QuteFormattingSettings;
+import com.javacc.ls.settings.JavaCCCompletionSettings;
+import com.javacc.ls.settings.JavaCCFormattingSettings;
 import com.javacc.ls.utils.JavaCCPositionUtility;
 import com.javacc.parser.Node;
 
@@ -79,8 +79,8 @@ class JavaCCCompletions {
 	 * @param cancelChecker      the cancel checker
 	 * @return completion list for the given position
 	 */
-	public CompletionList doComplete(Template template, Position position, QuteCompletionSettings completionSettings,
-			QuteFormattingSettings formattingSettings, CancelChecker cancelChecker) {
+	public CompletionList doComplete(Template template, Position position, JavaCCCompletionSettings completionSettings,
+			JavaCCFormattingSettings formattingSettings, CancelChecker cancelChecker) {
 		CompletionList list = new CompletionList();
 		Node node = JavaCCPositionUtility.findNodeAt(template, position);
 		fillCompletionSnippets(node, position, list);

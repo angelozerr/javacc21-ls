@@ -11,6 +11,7 @@
 
 package com.javacc.ls.settings.capabilities;
 
+import static com.javacc.ls.settings.capabilities.ServerCapabilitiesConstants.DEFAULT_CODELENS_OPTIONS;
 import static com.javacc.ls.settings.capabilities.ServerCapabilitiesConstants.DEFAULT_COMPLETION_OPTIONS;
 
 import org.eclipse.lsp4j.ServerCapabilities;
@@ -38,19 +39,27 @@ public class ServerCapabilitiesInitializer {
 		serverCapabilities.setTextDocumentSync(TextDocumentSyncKind.Incremental);
 		serverCapabilities.setDocumentHighlightProvider(!clientCapabilities.isDocumentHighlightDynamicRegistered());
 		serverCapabilities.setDefinitionProvider(!clientCapabilities.isDefinitionDynamicRegistered());
+		serverCapabilities.setReferencesProvider(!clientCapabilities.isReferencesDynamicRegistrationSupported());
 		serverCapabilities
-		.setDocumentSymbolProvider(!clientCapabilities.isDocumentSymbolDynamicRegistrationSupported());
-		/*serverCapabilities.setHoverProvider(!clientCapabilities.isHoverDynamicRegistered());
-		serverCapabilities.setDocumentFormattingProvider(!clientCapabilities.isFormattingDynamicRegistered());
-		serverCapabilities.setDocumentRangeFormattingProvider(
-			!clientCapabilities.isRangeFormattingDynamicRegistered());*/
+				.setDocumentSymbolProvider(!clientCapabilities.isDocumentSymbolDynamicRegistrationSupported());
+		/*
+		 * serverCapabilities.setHoverProvider(!clientCapabilities.
+		 * isHoverDynamicRegistered());
+		 * serverCapabilities.setDocumentFormattingProvider(!clientCapabilities.
+		 * isFormattingDynamicRegistered());
+		 * serverCapabilities.setDocumentRangeFormattingProvider(
+		 * !clientCapabilities.isRangeFormattingDynamicRegistered());
+		 */
 		if (!clientCapabilities.isCompletionDynamicRegistrationSupported()) {
 			serverCapabilities.setCompletionProvider(DEFAULT_COMPLETION_OPTIONS);
 		}
-		/*serverCapabilities.setDefinitionProvider(!clientCapabilities.isDefinitionDynamicRegistered());
+		/*
+		 * serverCapabilities.setDefinitionProvider(!clientCapabilities.
+		 * isDefinitionDynamicRegistered());
+		 */
 		if (!clientCapabilities.isCodeLensDynamicRegistered()) {
 			serverCapabilities.setCodeLensProvider(DEFAULT_CODELENS_OPTIONS);
-		}*/
+		}
 		return serverCapabilities;
 	}
 }
