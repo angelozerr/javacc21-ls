@@ -55,7 +55,7 @@ function connectToJavaCC21LS(context: ExtensionContext) {
   return requirements.resolveRequirements().then(requirements => {
     const clientOptions: LanguageClientOptions = {
       documentSelector: [
-        { scheme: 'file', language: 'javacc21' }],
+        { scheme: 'file', language: 'javacc' }],
       // wrap with key 'settings' so it can be handled same a DidChangeConfiguration
       initializationOptions: {
         settings: getJavaCC21Settings()
@@ -74,7 +74,7 @@ function connectToJavaCC21LS(context: ExtensionContext) {
     };
 
     const serverOptions = prepareJavaCC21Executable(requirements);
-    languageClient = new LanguageClient('javacc21', 'JavaCC 21 Support', serverOptions, clientOptions);
+    languageClient = new LanguageClient('javacc', 'JavaCC 21 Support', serverOptions, clientOptions);
     context.subscriptions.push(languageClient.start());
     return languageClient.onReady().then(() => {
 

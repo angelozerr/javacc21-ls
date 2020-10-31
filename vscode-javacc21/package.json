@@ -28,20 +28,20 @@
     "JavaCC21"
   ],
   "activationEvents": [
-    "onLanguage:javacc21"
+    "onLanguage:javacc"
   ],
   "main": "./dist/extension",
   "contributes": {
     "languages": [
       {
-        "id": "javacc21",
+        "id": "javacc",
         "aliases": [
           "JavaCC 21"
         ],
         "extensions": [
           "javacc"
         ],
-        "configuration": "./language-support/javacc21/language-configuration.json"
+        "configuration": "./language-support/language-configuration.json"
       }
     ],
     "configuration": {
@@ -59,7 +59,14 @@
           "scope": "window"
         }
       }
-    }
+    },
+    "grammars": [
+      {
+        "language": "javacc",
+        "scopeName": "source.javacc",
+        "path": "./language-support/JavaCC.tmLanguage.json"
+      }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "webpack --mode production",

@@ -1,0 +1,66 @@
+{
+  "name": "JavaCC",
+  "fileTypes": [
+    "javacc"
+  ],
+  "patterns": [
+    {
+      "include": "#comments"
+    }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "captures": {
+            "0": {
+              "name": "punctuation.definition.comment.javacc"
+            }
+          },
+          "match": "/\\*\\*/",
+          "name": "comment.block.empty.javacc"
+        },
+        {
+          "include": "#comments-inline"
+        }
+      ]
+    },
+    "comments-inline": {
+      "patterns": [
+        {
+          "begin": "/\\*",
+          "captures": {
+            "0": {
+              "name": "punctuation.definition.comment.javacc"
+            }
+          },
+          "end": "\\*/",
+          "name": "comment.block.javacc"
+        },
+        {
+          "begin": "(^[ \\t]+)?(?=//)",
+          "beginCaptures": {
+            "1": {
+              "name": "punctuation.whitespace.comment.leading.javacc"
+            }
+          },
+          "end": "(?!\\G)",
+          "patterns": [
+            {
+              "begin": "//",
+              "beginCaptures": {
+                "0": {
+                  "name": "punctuation.definition.comment.javacc"
+                }
+              },
+              "end": "\\n",
+              "name": "comment.line.double-slash.javacc"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "scopeName": "source.javacc",
+  "uuid": "7ba10786-68d6-4715-9a3e-bcbbda9854a2"
+}
