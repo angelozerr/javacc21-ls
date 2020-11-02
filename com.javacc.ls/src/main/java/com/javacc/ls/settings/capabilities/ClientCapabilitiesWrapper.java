@@ -81,6 +81,14 @@ public class ClientCapabilitiesWrapper {
 		return v3Supported && isDynamicRegistrationSupported(getTextDocument().getReferences());
 	}
 
+	public boolean isLinkDynamicRegistrationSupported() {
+		return v3Supported && isDynamicRegistrationSupported(getTextDocument().getDocumentLink());
+	}
+
+	public boolean isRangeFoldingDynamicRegistrationSupported() {
+		return v3Supported && isDynamicRegistrationSupported(getTextDocument().getFoldingRange());
+	}
+
 	private boolean isDynamicRegistrationSupported(DynamicRegistrationCapabilities capability) {
 		return capability != null && capability.getDynamicRegistration() != null
 				&& capability.getDynamicRegistration().booleanValue();

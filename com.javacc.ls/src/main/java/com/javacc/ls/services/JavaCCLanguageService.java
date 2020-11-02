@@ -17,7 +17,9 @@ import org.eclipse.lsp4j.CodeLens;
 import org.eclipse.lsp4j.CompletionList;
 import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.DocumentHighlight;
+import org.eclipse.lsp4j.DocumentLink;
 import org.eclipse.lsp4j.DocumentSymbol;
+import org.eclipse.lsp4j.FoldingRange;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.LocationLink;
 import org.eclipse.lsp4j.Position;
@@ -29,11 +31,12 @@ import com.javacc.ls.ls.commons.TextDocument;
 import com.javacc.ls.parser.Template;
 import com.javacc.ls.settings.JavaCCCodeLensSettings;
 import com.javacc.ls.settings.JavaCCCompletionSettings;
+import com.javacc.ls.settings.JavaCCFoldingSettings;
 import com.javacc.ls.settings.JavaCCFormattingSettings;
 import com.javacc.ls.settings.JavaCCValidationSettings;
 
 /**
- * The Qute language service.
+ * The JavaCC language service.
  * 
  * @author Angelo ZERR
  *
@@ -47,6 +50,8 @@ public class JavaCCLanguageService {
 	private final JavaCCReference references;
 	private final JavaCCSymbolsProvider symbolsProvider;
 	private final JavaCCDiagnostics diagnostics;
+	private final JavaCCFoldings foldings;
+	private final JavaCCDocumentLink documentLink;
 
 	public JavaCCLanguageService() {
 		this.completions = new JavaCCCompletions();
@@ -56,6 +61,8 @@ public class JavaCCLanguageService {
 		this.references = new JavaCCReference();
 		this.symbolsProvider = new JavaCCSymbolsProvider();
 		this.diagnostics = new JavaCCDiagnostics();
+		this.foldings = new JavaCCFoldings();
+		this.documentLink = new JavaCCDocumentLink();
 	}
 
 	/**
@@ -92,9 +99,9 @@ public class JavaCCLanguageService {
 	}
 
 	/**
-	 * Validate the given Qute <code>template</code>.
+	 * Validate the given JavaCC <code>template</code>.
 	 * 
-	 * @param template           the Qute template.
+	 * @param template           the JavaCC template.
 	 * @param document
 	 * @param validationSettings the validation settings.
 	 * @param cancelChecker      the cancel checker.
@@ -113,5 +120,14 @@ public class JavaCCLanguageService {
 	public List<? extends Location> findReferences(Template template, Position position, ReferenceContext context,
 			CancelChecker cancelChecker) {
 		return references.findReferences(template, position, context, cancelChecker);
+	}
+
+	public List<FoldingRange> getFoldingRanges(Template template, JavaCCFoldingSettings context,
+			CancelChecker cancelChecker) {
+		return foldings.getFoldingRanges(template, context, cancelChecker);
+	}
+
+	public List<DocumentLink> findDocumentLinks(Template template) {
+		return documentLink.findDocumentLinks(template);
 	}
 }

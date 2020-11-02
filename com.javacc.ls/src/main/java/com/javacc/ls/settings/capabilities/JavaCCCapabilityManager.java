@@ -10,15 +10,20 @@ package com.javacc.ls.settings.capabilities;
 import static com.javacc.ls.settings.capabilities.ServerCapabilitiesConstants.CODE_LENS_ID;
 import static com.javacc.ls.settings.capabilities.ServerCapabilitiesConstants.COMPLETION_ID;
 import static com.javacc.ls.settings.capabilities.ServerCapabilitiesConstants.DEFAULT_COMPLETION_OPTIONS;
-import static com.javacc.ls.settings.capabilities.ServerCapabilitiesConstants.DOCUMENT_DEFINITION_ID;
+import static com.javacc.ls.settings.capabilities.ServerCapabilitiesConstants.DEFAULT_LINK_OPTIONS;
+import static com.javacc.ls.settings.capabilities.ServerCapabilitiesConstants.DEFINITION_ID;
 import static com.javacc.ls.settings.capabilities.ServerCapabilitiesConstants.DOCUMENT_HIGHLIGHT_ID;
 import static com.javacc.ls.settings.capabilities.ServerCapabilitiesConstants.DOCUMENT_SYMBOL_ID;
+import static com.javacc.ls.settings.capabilities.ServerCapabilitiesConstants.FOLDING_RANGE_ID;
+import static com.javacc.ls.settings.capabilities.ServerCapabilitiesConstants.LINK_ID;
 import static com.javacc.ls.settings.capabilities.ServerCapabilitiesConstants.REFERENCES_ID;
 import static com.javacc.ls.settings.capabilities.ServerCapabilitiesConstants.TEXT_DOCUMENT_CODE_LENS;
 import static com.javacc.ls.settings.capabilities.ServerCapabilitiesConstants.TEXT_DOCUMENT_COMPLETION;
 import static com.javacc.ls.settings.capabilities.ServerCapabilitiesConstants.TEXT_DOCUMENT_DEFINITION;
 import static com.javacc.ls.settings.capabilities.ServerCapabilitiesConstants.TEXT_DOCUMENT_DOCUMENT_SYMBOL;
+import static com.javacc.ls.settings.capabilities.ServerCapabilitiesConstants.TEXT_DOCUMENT_FOLDING_RANGE;
 import static com.javacc.ls.settings.capabilities.ServerCapabilitiesConstants.TEXT_DOCUMENT_HIGHLIGHT;
+import static com.javacc.ls.settings.capabilities.ServerCapabilitiesConstants.TEXT_DOCUMENT_LINK;
 import static com.javacc.ls.settings.capabilities.ServerCapabilitiesConstants.TEXT_DOCUMENT_REFERENCES;
 
 import java.util.Collections;
@@ -55,7 +60,7 @@ public class JavaCCCapabilityManager {
 			registerCapability(DOCUMENT_HIGHLIGHT_ID, TEXT_DOCUMENT_HIGHLIGHT);
 		}
 		if (this.getClientCapabilities().isDefinitionDynamicRegistered()) {
-			registerCapability(DOCUMENT_DEFINITION_ID, TEXT_DOCUMENT_DEFINITION);
+			registerCapability(DEFINITION_ID, TEXT_DOCUMENT_DEFINITION);
 		}
 		if (this.getClientCapabilities().isReferencesDynamicRegistrationSupported()) {
 			registerCapability(REFERENCES_ID, TEXT_DOCUMENT_REFERENCES);
@@ -68,6 +73,12 @@ public class JavaCCCapabilityManager {
 		}
 		if (this.getClientCapabilities().isCodeLensDynamicRegistered()) {
 			registerCapability(CODE_LENS_ID, TEXT_DOCUMENT_CODE_LENS);
+		}
+		if (this.getClientCapabilities().isRangeFoldingDynamicRegistrationSupported()) {
+			registerCapability(FOLDING_RANGE_ID, TEXT_DOCUMENT_FOLDING_RANGE);
+		}
+		if (this.getClientCapabilities().isLinkDynamicRegistrationSupported()) {
+			registerCapability(LINK_ID, TEXT_DOCUMENT_LINK, DEFAULT_LINK_OPTIONS);
 		}
 		/*
 		 * if (this.getClientCapabilities().isCodeActionDynamicRegistered()) {

@@ -13,6 +13,7 @@ package com.javacc.ls.settings.capabilities;
 
 import static com.javacc.ls.settings.capabilities.ServerCapabilitiesConstants.DEFAULT_CODELENS_OPTIONS;
 import static com.javacc.ls.settings.capabilities.ServerCapabilitiesConstants.DEFAULT_COMPLETION_OPTIONS;
+import static com.javacc.ls.settings.capabilities.ServerCapabilitiesConstants.DEFAULT_LINK_OPTIONS;
 
 import org.eclipse.lsp4j.ServerCapabilities;
 import org.eclipse.lsp4j.TextDocumentSyncKind;
@@ -42,6 +43,7 @@ public class ServerCapabilitiesInitializer {
 		serverCapabilities.setReferencesProvider(!clientCapabilities.isReferencesDynamicRegistrationSupported());
 		serverCapabilities
 				.setDocumentSymbolProvider(!clientCapabilities.isDocumentSymbolDynamicRegistrationSupported());
+		serverCapabilities.setFoldingRangeProvider(!clientCapabilities.isRangeFoldingDynamicRegistrationSupported());
 		/*
 		 * serverCapabilities.setHoverProvider(!clientCapabilities.
 		 * isHoverDynamicRegistered());
@@ -53,10 +55,9 @@ public class ServerCapabilitiesInitializer {
 		if (!clientCapabilities.isCompletionDynamicRegistrationSupported()) {
 			serverCapabilities.setCompletionProvider(DEFAULT_COMPLETION_OPTIONS);
 		}
-		/*
-		 * serverCapabilities.setDefinitionProvider(!clientCapabilities.
-		 * isDefinitionDynamicRegistered());
-		 */
+		if (!clientCapabilities.isLinkDynamicRegistrationSupported()) {
+			serverCapabilities.setDocumentLinkProvider(DEFAULT_LINK_OPTIONS);
+		}
 		if (!clientCapabilities.isCodeLensDynamicRegistered()) {
 			serverCapabilities.setCodeLensProvider(DEFAULT_CODELENS_OPTIONS);
 		}

@@ -47,7 +47,7 @@
     "configuration": {
       "title": "JavaCC 21 Tools",
       "properties": {
-        "javacc21.trace.server": {
+        "javacc.trace.server": {
           "type": "string",
           "enum": [
             "off",

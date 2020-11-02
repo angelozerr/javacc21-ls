@@ -19,7 +19,7 @@ import com.javacc.ls.utils.JSONUtility;
  * 
  * { 'quarkus': {...} }
  */
-public class AllQuteSettings {
+public class AllJavaCCSettings {
 
 	private static class ToolsSettings {
 
@@ -50,7 +50,7 @@ public class AllQuteSettings {
 	}
 
 	public static Object getQuarkusToolsSettings(Object initializationOptionsSettings) {
-		AllQuteSettings rootSettings = JSONUtility.toModel(initializationOptionsSettings, AllQuteSettings.class);
+		AllJavaCCSettings rootSettings = JSONUtility.toModel(initializationOptionsSettings, AllJavaCCSettings.class);
 		if (rootSettings == null) {
 			return null;
 		}

@@ -1,39 +1,37 @@
+import * as os from 'os';
+import * as path from 'path';
 import { workspace } from 'vscode';
 import { Executable, ExecutableOptions } from 'vscode-languageclient';
 import { RequirementsData } from './requirements';
-import * as os from 'os';
-import * as path from 'path';
 const glob = require('glob');
 
 const DEBUG = startedInDebugMode();
-const DEBUG_PORT = 1064;
-const JAVACC21_DEBUG_PORT = 1065;
-const JAVACC21_SERVER_NAME = 'com.javacc.ls-uber.jar';
+const DEBUG_PORT = 1074;
+const JAVACC_SERVER_NAME = 'com.javacc.ls-uber.jar';
+const JAVACC_SERVER_MAIN_CLASS = 'com.javacc.ls.ls.JavaCCServerLauncher';
 
-export function prepareJavaCC21Executable(requirements: RequirementsData): Executable {
-  return prepareExecutable(requirements, JAVACC21_SERVER_NAME, JAVACC21_DEBUG_PORT);
-}
-
-function prepareExecutable(requirements: RequirementsData, serverName: string, debugPort: number): Executable {
+export function prepareExecutable(requirements: RequirementsData, microprofileJavaExtensions: string[]): Executable {
   const executable: Executable = Object.create(null);
   const options: ExecutableOptions = Object.create(null);
   options.env = process.env;
   options.stdio = 'pipe';
   executable.options = options;
   executable.command = path.resolve(requirements.java_home + '/bin/java');
-  executable.args = prepareParams(serverName, debugPort);
+  executable.args = prepareParams(microprofileJavaExtensions);
   return executable;
 }
 
-function prepareParams(serverName: string, debugPort: number): string[] {
+function prepareParams(microprofileJavaExtensions: string[]): string[] {
   const params: string[] = [];
   if (DEBUG) {
-    params.push(`-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=${debugPort},quiet=y`);
-    // suspend=y is the default. Use this form if you need to debug the server startup code:
-    // params.push(`-agentlib:jdwp=transport=dt_socket,server=y,address=${DEBUG_PORT}`);
+    if (process.env.SUSPEND_SERVER === 'true') {
+      params.push(`-agentlib:jdwp=transport=dt_socket,server=y,address=${DEBUG_PORT}`);
+    } else {
+      params.push(`-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=${DEBUG_PORT},quiet=y`);
+    }
   }
 
-  const vmargs = workspace.getConfiguration("xml").get("server.vmargs", '');
+  const vmargs = workspace.getConfiguration("javacc").get("server.vmargs", '');
   if (os.platform() === 'win32') {
     const watchParentProcess = '-DwatchParentProcess=';
     if (vmargs.indexOf(watchParentProcess) < 0) {
@@ -42,19 +40,34 @@ function prepareParams(serverName: string, debugPort: number): string[] {
   }
   parseVMargs(params, vmargs);
   const serverHome: string = path.resolve(__dirname, '../server');
-  const launchersFound: Array<string> = glob.sync(`**/${serverName}`, { cwd: serverHome });
-  if (launchersFound.length) {
-    params.push('-jar'); params.push(path.resolve(serverHome, launchersFound[0]));
+  const microprofileServerFound: Array<string> = glob.sync(`**/${JAVACC_SERVER_NAME}`, { cwd: serverHome });
+  if (microprofileServerFound.length) {
+    let mpJavaExtensionsClasspath = '';
+    if (microprofileJavaExtensions.length > 0) {
+      const classpathSeperator = os.platform() === 'win32' ? ';' : ':';
+      mpJavaExtensionsClasspath = classpathSeperator + microprofileJavaExtensions.join(classpathSeperator);
+    }
+
+    params.push('-cp');
+    params.push(`${serverHome}/*` + mpJavaExtensionsClasspath);
+    params.push(JAVACC_SERVER_MAIN_CLASS);
+  } else {
+    throw new Error('Unable to find required Language Server JARs');
   }
   return params;
 }
 
-function startedInDebugMode(): boolean {
-  const args = (process as any).execArgv;
+function hasDebugFlag(args: string[]): boolean {
   if (args) {
-    return args.some((arg: any) => /^--debug=?/.test(arg) || /^--debug-brk=?/.test(arg) || /^--inspect-brk=?/.test(arg));
+    // See https://nodejs.org/en/docs/guides/debugging-getting-started/
+    return args.some(arg => /^--inspect/.test(arg) || /^--debug/.test(arg));
   }
   return false;
+}
+
+function startedInDebugMode(): boolean {
+  const args: string[] = process.execArgv;
+  return hasDebugFlag(args);
 }
 
 // exported for tests

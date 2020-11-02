@@ -17,7 +17,7 @@ import * as requirements from './languageServer/requirements';
 
 import { DidChangeConfigurationNotification, LanguageClientOptions, LanguageClient, ReferencesRequest } from 'vscode-languageclient';
 import { ExtensionContext, commands, window, workspace, Uri, Position } from 'vscode';
-import { prepareJavaCC21Executable } from './languageServer/javaServerStarter';
+import { prepareExecutable } from './languageServer/javaServerStarter';
 import { registerConfigurationUpdateCommand, registerOpenURICommand, CommandKind } from './lsp-commands';
 import { Commands } from './commands';
 
@@ -62,7 +62,7 @@ function connectToJavaCC21LS(context: ExtensionContext) {
       },
       synchronize: {
         // preferences starting with these will trigger didChangeConfiguration
-        configurationSection: ['javacc21', '[javacc21]']
+        configurationSection: ['javacc', '[javacc]']
       },
       middleware: {
         workspace: {
@@ -73,7 +73,7 @@ function connectToJavaCC21LS(context: ExtensionContext) {
       }
     };
 
-    const serverOptions = prepareJavaCC21Executable(requirements);
+    const serverOptions = prepareExecutable(requirements, []);
     languageClient = new LanguageClient('javacc', 'JavaCC 21 Support', serverOptions, clientOptions);
     context.subscriptions.push(languageClient.start());
     return languageClient.onReady().then(() => {
@@ -101,7 +101,7 @@ function connectToJavaCC21LS(context: ExtensionContext) {
    *          }
    */
   function getJavaCC21Settings(): JSON {
-    const configQuarkus = workspace.getConfiguration().get('javacc21');
+    const configQuarkus = workspace.getConfiguration().get('javacc');
     let quarkus;
     if (!configQuarkus) { // Set default preferences if not provided
       const defaultValue =

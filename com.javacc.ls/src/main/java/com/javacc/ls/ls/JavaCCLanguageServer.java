@@ -1,5 +1,5 @@
 /*******************************************************************************
-* Copyright (c) 2019 Red Hat Inc. and others.
+* Copyright (c) 2020 Red Hat Inc. and others.
 * All rights reserved. This program and the accompanying materials
 * which accompanies this distribution, and is available at
 * http://www.eclipse.org/legal/epl-v20.html
@@ -35,14 +35,14 @@ import com.javacc.ls.settings.capabilities.JavaCCCapabilityManager;
 import com.javacc.ls.settings.capabilities.ServerCapabilitiesInitializer;
 
 /**
- * Qute language server.
+ * JavaCC language server.
  *
  */
 public class JavaCCLanguageServer implements LanguageServer, ProcessLanguageServer, JavaCCLanguageServerAPI {
 
 	private static final Logger LOGGER = Logger.getLogger(JavaCCLanguageServer.class.getName());
 
-	private final JavaCCLanguageService quteLanguageService;
+	private final JavaCCLanguageService javaccLanguageService;
 	private final JavaCCTextDocumentService textDocumentService;
 	private final WorkspaceService workspaceService;
 
@@ -51,7 +51,7 @@ public class JavaCCLanguageServer implements LanguageServer, ProcessLanguageServ
 	private JavaCCCapabilityManager capabilityManager;
 
 	public JavaCCLanguageServer() {
-		quteLanguageService = new JavaCCLanguageService();
+		javaccLanguageService = new JavaCCLanguageService();
 		textDocumentService = new JavaCCTextDocumentService(this, new SharedSettings());
 		workspaceService = new JavaCCWorkspaceService(this);
 	}
@@ -130,7 +130,7 @@ public class JavaCCLanguageServer implements LanguageServer, ProcessLanguageServ
 	}
 
 	public JavaCCLanguageService getJavaCCLanguageService() {
-		return quteLanguageService;
+		return javaccLanguageService;
 	}
 
 }

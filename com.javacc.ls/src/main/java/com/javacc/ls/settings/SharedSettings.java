@@ -23,12 +23,14 @@ public class SharedSettings {
 	private final JavaCCCodeLensSettings codeLensSettings;
 	private final JavaCCFormattingSettings formattingSettings;
 	private final JavaCCValidationSettings validationSettings;
+	private final JavaCCFoldingSettings foldingSettings;
 
 	public SharedSettings() {
 		this.completionSettings = new JavaCCCompletionSettings();
 		this.codeLensSettings = new JavaCCCodeLensSettings();
 		this.formattingSettings = new JavaCCFormattingSettings();
 		this.validationSettings = new JavaCCValidationSettings();
+		this.foldingSettings = new JavaCCFoldingSettings();
 	}
 
 	/**
@@ -65,6 +67,15 @@ public class SharedSettings {
 	 */
 	public JavaCCValidationSettings getValidationSettings() {
 		return validationSettings;
+	}
+
+	/**
+	 * Returns the folding settings.
+	 * 
+	 * @return the folding settings.
+	 */
+	public JavaCCFoldingSettings getFoldingSettings() {
+		return foldingSettings;
 	}
 
 }

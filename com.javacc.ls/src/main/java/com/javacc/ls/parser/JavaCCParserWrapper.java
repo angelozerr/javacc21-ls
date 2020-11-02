@@ -1,6 +1,8 @@
 package com.javacc.ls.parser;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 
 import org.eclipse.lsp4j.jsonrpc.CancelChecker;
 
@@ -26,7 +28,12 @@ public class JavaCCParserWrapper {
 		Template template = new Template(templateId);
 		
 		Grammar grammar = new Grammar(new JavaCCOptions(new String[] { templateId }));
-		grammar.setFilename(templateId.replace("file:///", "").replace("file://", ""));
+		try {
+			grammar.setFilename(URLDecoder.decode(templateId.replace("file:///", "").replace("file://", ""),"UTF-8"));
+		} catch (UnsupportedEncodingException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 
 		JavaCCParser parser = new JavaCCParser(grammar, templateId, content);
 		parser.setEnterIncludes(false);
