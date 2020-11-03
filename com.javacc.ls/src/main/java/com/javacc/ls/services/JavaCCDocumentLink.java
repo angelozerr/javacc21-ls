@@ -55,7 +55,7 @@ class JavaCCDocumentLink {
 	}
 
 	public static File getIncludeFile(StringLiteral include) {
-		String location = ((StringLiteral) include).getImage();
+		String location = include.getImage();
 		location = location.substring(1, location.length() - 1);
 		File file = new File(location);
 		if (!file.exists()) {
