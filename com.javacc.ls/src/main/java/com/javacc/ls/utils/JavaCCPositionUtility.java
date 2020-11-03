@@ -5,8 +5,8 @@ import org.eclipse.lsp4j.LocationLink;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 
-import com.javacc.ls.parser.Template;
 import com.javacc.parser.Node;
+import com.javacc.parser.tree.GrammarFile;
 
 //import qute.ast.EACH;
 //import qute.ast.ENDEACH;
@@ -29,7 +29,7 @@ public class JavaCCPositionUtility {
 		return new Range(start, end);
 	}
 
-	public static Node findNodeAt(Template template, Position position) {
+	public static Node findNodeAt(GrammarFile template, Position position) {
 		Node root = template.getRoot();
 		if (root == null) {
 			return null;

@@ -10,18 +10,18 @@ import org.eclipse.lsp4j.CodeLens;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.jsonrpc.CancelChecker;
 
-import com.javacc.ls.parser.Template;
 import com.javacc.ls.settings.JavaCCCodeLensSettings;
 import com.javacc.ls.utils.JavaCCPositionUtility;
 import com.javacc.ls.utils.JavaCCSearchUtils;
 import com.javacc.parser.Node;
+import com.javacc.parser.tree.GrammarFile;
 import com.javacc.parser.tree.Identifier;
 
 public class JavaCCCodeLens {
 
-	public List<? extends CodeLens> getCodeLens(Template template, JavaCCCodeLensSettings codeLensSettings,
+	public List<? extends CodeLens> getCodeLens(GrammarFile grammarFile, JavaCCCodeLensSettings codeLensSettings,
 			CancelChecker cancelChecker) {
-		Node root = template.getRoot();
+		Node root = grammarFile.getRoot();
 		if (root == null) {
 			return Collections.emptyList();
 		}

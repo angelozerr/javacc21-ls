@@ -28,12 +28,12 @@ import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.jsonrpc.CancelChecker;
 
 import com.javacc.ls.ls.commons.TextDocument;
-import com.javacc.ls.parser.Template;
 import com.javacc.ls.settings.JavaCCCodeLensSettings;
 import com.javacc.ls.settings.JavaCCCompletionSettings;
 import com.javacc.ls.settings.JavaCCFoldingSettings;
 import com.javacc.ls.settings.JavaCCFormattingSettings;
 import com.javacc.ls.settings.JavaCCValidationSettings;
+import com.javacc.parser.tree.GrammarFile;
 
 /**
  * The JavaCC language service.
@@ -68,66 +68,67 @@ public class JavaCCLanguageService {
 	/**
 	 * Returns completion list for the given position
 	 * 
-	 * @param template           the Qute template
+	 * @param JavaCCParser       the Qute JavaCCParser
 	 * @param position           the position where completion was triggered
 	 * @param completionSettings the completion settings.
 	 * @param formattingSettings the formatting settings.
 	 * @param cancelChecker      the cancel checker
 	 * @return completion list for the given position
 	 */
-	public CompletionList doComplete(Template template, Position position, JavaCCCompletionSettings completionSettings,
-			JavaCCFormattingSettings formattingSettings, CancelChecker cancelChecker) {
-		return completions.doComplete(template, position, completionSettings, formattingSettings, cancelChecker);
-	}
-
-	public List<DocumentHighlight> findDocumentHighlights(Template template, Position position,
+	public CompletionList doComplete(GrammarFile grammarFile, Position position,
+			JavaCCCompletionSettings completionSettings, JavaCCFormattingSettings formattingSettings,
 			CancelChecker cancelChecker) {
-		return highlighting.findDocumentHighlights(template, position, cancelChecker);
+		return completions.doComplete(grammarFile, position, completionSettings, formattingSettings, cancelChecker);
 	}
 
-	public List<? extends LocationLink> findDefinition(Template template, Position position,
+	public List<DocumentHighlight> findDocumentHighlights(GrammarFile grammarFile, Position position,
 			CancelChecker cancelChecker) {
-		return definition.findDefinition(template, position, cancelChecker);
+		return highlighting.findDocumentHighlights(grammarFile, position, cancelChecker);
 	}
 
-	public List<DocumentSymbol> findDocumentSymbols(Template template, CancelChecker cancelChecker) {
-		return symbolsProvider.findDocumentSymbols(template, cancelChecker);
+	public List<? extends LocationLink> findDefinition(GrammarFile grammarFile, Position position,
+			CancelChecker cancelChecker) {
+		return definition.findDefinition(grammarFile, position, cancelChecker);
 	}
 
-	public List<SymbolInformation> findSymbolInformations(Template template, CancelChecker cancelChecker) {
-		return symbolsProvider.findSymbolInformations(template, cancelChecker);
+	public List<DocumentSymbol> findDocumentSymbols(GrammarFile grammarFile, CancelChecker cancelChecker) {
+		return symbolsProvider.findDocumentSymbols(grammarFile, cancelChecker);
+	}
+
+	public List<SymbolInformation> findSymbolInformations(GrammarFile grammarFile, CancelChecker cancelChecker) {
+		return symbolsProvider.findSymbolInformations(grammarFile, cancelChecker);
 	}
 
 	/**
-	 * Validate the given JavaCC <code>template</code>.
+	 * Validate the given JavaCC <code>JavaCCParser</code>.
 	 * 
-	 * @param template           the JavaCC template.
+	 * @param JavaCCParser       the JavaCC JavaCCParser.
 	 * @param document
 	 * @param validationSettings the validation settings.
 	 * @param cancelChecker      the cancel checker.
 	 * @return the result of the validation.
 	 */
-	public List<Diagnostic> doDiagnostics(Template template, TextDocument document,
+	public List<Diagnostic> doDiagnostics(GrammarFile grammarFile, TextDocument document,
 			JavaCCValidationSettings validationSettings, CancelChecker cancelChecker) {
-		return diagnostics.doDiagnostics(template, document, validationSettings, cancelChecker);
+		return diagnostics.doDiagnostics(grammarFile, document, validationSettings, cancelChecker);
 	}
 
-	public List<? extends CodeLens> getCodeLens(Template template, JavaCCCodeLensSettings codeLensSettings,
+	public List<? extends CodeLens> getCodeLens(GrammarFile grammarFile, JavaCCCodeLensSettings codeLensSettings,
 			CancelChecker cancelChecker) {
-		return codelens.getCodeLens(template, codeLensSettings, cancelChecker);
+		return codelens.getCodeLens(grammarFile, codeLensSettings, cancelChecker);
 	}
 
-	public List<? extends Location> findReferences(Template template, Position position, ReferenceContext context,
+	public List<? extends Location> findReferences(GrammarFile grammarFile, Position position, ReferenceContext context,
 			CancelChecker cancelChecker) {
-		return references.findReferences(template, position, context, cancelChecker);
+		return references.findReferences(grammarFile, position, context, cancelChecker);
 	}
 
-	public List<FoldingRange> getFoldingRanges(Template template, JavaCCFoldingSettings context,
+	public List<FoldingRange> getFoldingRanges(GrammarFile grammarFile, JavaCCFoldingSettings context,
 			CancelChecker cancelChecker) {
-		return foldings.getFoldingRanges(template, context, cancelChecker);
+		return foldings.getFoldingRanges(grammarFile, context, cancelChecker);
 	}
 
-	public List<DocumentLink> findDocumentLinks(Template template) {
-		return documentLink.findDocumentLinks(template);
+	public List<DocumentLink> findDocumentLinks(GrammarFile grammarFile) {
+		return documentLink.findDocumentLinks(grammarFile);
 	}
 }

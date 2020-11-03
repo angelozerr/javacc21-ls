@@ -10,16 +10,16 @@ import java.util.List;
 import org.eclipse.lsp4j.DocumentLink;
 import org.eclipse.lsp4j.Range;
 
-import com.javacc.ls.parser.Template;
 import com.javacc.ls.utils.JavaCCPositionUtility;
 import com.javacc.parser.Node;
+import com.javacc.parser.tree.GrammarFile;
 import com.javacc.parser.tree.GrammarInclusion;
 import com.javacc.parser.tree.StringLiteral;
 
 class JavaCCDocumentLink {
 
-	public List<DocumentLink> findDocumentLinks(Template template) {
-		Node root = template.getRoot();
+	public List<DocumentLink> findDocumentLinks(GrammarFile grammarFile) {
+		Node root = grammarFile.getRoot();
 		if (root == null) {
 			return Collections.emptyList();
 		}

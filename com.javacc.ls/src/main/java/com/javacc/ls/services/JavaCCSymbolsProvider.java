@@ -20,9 +20,9 @@ import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.SymbolKind;
 import org.eclipse.lsp4j.jsonrpc.CancelChecker;
 
-import com.javacc.ls.parser.Template;
 import com.javacc.ls.utils.JavaCCPositionUtility;
 import com.javacc.parser.Node;
+import com.javacc.parser.tree.GrammarFile;
 
 /**
  * Qute symbol provider.
@@ -30,19 +30,19 @@ import com.javacc.parser.Node;
  */
 class JavaCCSymbolsProvider {
 
-	public List<DocumentSymbol> findDocumentSymbols(Template template, CancelChecker cancelChecker) {
+	public List<DocumentSymbol> findDocumentSymbols(GrammarFile grammarFile, CancelChecker cancelChecker) {
 		List<DocumentSymbol> symbols = new ArrayList<>();
-		Node root = template.getRoot();
+		Node root = grammarFile.getRoot();
 		if (root != null) {
 			for (int i = 0; i < root.getChildCount(); i++) {
 				Node child = root.getChild(i);
-				findDocumentSymbols(child, symbols, template, cancelChecker);
+				findDocumentSymbols(child, symbols, grammarFile, cancelChecker);
 			}
 		}
 		return symbols;
 	}
 
-	private void findDocumentSymbols(Node node, List<DocumentSymbol> symbols, Template template,
+	private void findDocumentSymbols(Node node, List<DocumentSymbol> symbols, GrammarFile grammarFile,
 			CancelChecker cancelChecker) {
 		if (!isNodeSymbol(node)) {
 			return;
@@ -60,7 +60,7 @@ class JavaCCSymbolsProvider {
 		if (node.getChildCount() > 0) {
 			for (int i = 0; i < node.getChildCount(); i++) {
 				Node child = node.getChild(i);
-				findDocumentSymbols(child, children, template, cancelChecker);
+				findDocumentSymbols(child, children, grammarFile, cancelChecker);
 			}
 		}
 	}
@@ -99,9 +99,9 @@ class JavaCCSymbolsProvider {
 		return true;
 	}
 
-	public List<SymbolInformation> findSymbolInformations(Template template, CancelChecker cancelChecker) {
+	public List<SymbolInformation> findSymbolInformations(GrammarFile grammarFile, CancelChecker cancelChecker) {
 		List<SymbolInformation> symbols = new ArrayList<>();
-		Node root = template.getRoot();
+		Node root = grammarFile.getRoot();
 		if (root != null) {
 
 		}

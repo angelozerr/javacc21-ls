@@ -24,20 +24,20 @@ import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.jsonrpc.CancelChecker;
 
 import com.javacc.ls.ls.commons.BadLocationException;
-import com.javacc.ls.parser.Template;
 import com.javacc.ls.utils.JavaCCPositionUtility;
 import com.javacc.ls.utils.JavaCCSearchUtils;
 import com.javacc.parser.Node;
+import com.javacc.parser.tree.GrammarFile;
 import com.javacc.parser.tree.Identifier;
 
 class JavaCCHighlighting {
 
 	private static final Logger LOGGER = Logger.getLogger(JavaCCHighlighting.class.getName());
 
-	public List<DocumentHighlight> findDocumentHighlights(Template template, Position position,
+	public List<DocumentHighlight> findDocumentHighlights(GrammarFile grammarFile, Position position,
 			CancelChecker cancelChecker) {
 		try {
-			Node node = JavaCCPositionUtility.findNodeAt(template, position);
+			Node node = JavaCCPositionUtility.findNodeAt(grammarFile, position);
 			if (node == null) {
 				return Collections.emptyList();
 			}
@@ -45,7 +45,7 @@ class JavaCCHighlighting {
 				return Collections.emptyList();
 			}
 			List<DocumentHighlight> highlights = new ArrayList<>();
-			fillWithDefaultHighlights((Identifier) node, template.getRoot(), position, highlights, cancelChecker);
+			fillWithDefaultHighlights((Identifier) node, grammarFile.getRoot(), position, highlights, cancelChecker);
 			return highlights;
 		} catch (BadLocationException e) {
 			LOGGER.log(Level.SEVERE, "In JavaCCHighlighting the client provided Position is at a BadLocation", e);

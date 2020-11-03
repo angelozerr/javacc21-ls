@@ -22,11 +22,11 @@ import org.eclipse.lsp4j.jsonrpc.CancelChecker;
 import com.javacc.ls.ls.commons.BadLocationException;
 import com.javacc.ls.ls.commons.snippets.ISnippetLineContext;
 import com.javacc.ls.ls.commons.snippets.SnippetRegistry;
-import com.javacc.ls.parser.Template;
 import com.javacc.ls.settings.JavaCCCompletionSettings;
 import com.javacc.ls.settings.JavaCCFormattingSettings;
 import com.javacc.ls.utils.JavaCCPositionUtility;
 import com.javacc.parser.Node;
+import com.javacc.parser.tree.GrammarFile;
 
 /**
  * The Qute completions
@@ -79,32 +79,27 @@ class JavaCCCompletions {
 	 * @param cancelChecker      the cancel checker
 	 * @return completion list for the given position
 	 */
-	public CompletionList doComplete(Template template, Position position, JavaCCCompletionSettings completionSettings,
-			JavaCCFormattingSettings formattingSettings, CancelChecker cancelChecker) {
+	public CompletionList doComplete(GrammarFile template, Position position,
+			JavaCCCompletionSettings completionSettings, JavaCCFormattingSettings formattingSettings,
+			CancelChecker cancelChecker) {
 		CompletionList list = new CompletionList();
 		Node node = JavaCCPositionUtility.findNodeAt(template, position);
 		fillCompletionSnippets(node, position, list);
 		if (node != null) {
 
 		}
-		return  list;
+		return list;
 	}
 
 	private void fillCompletionSnippets(Node node, Position position, CompletionList list) {
-		/*if (node == null || node instanceof Text) {
-			initSnippets();
-			ISnippetLineContext lineContext = new LineContext(node, position);
-			Collection<CompletionItem> snippetItems = SnippetRegistry.getInstance().getCompletionItems(lineContext,
-					true, context -> {
-						if (!"qute".equals(context.getType())) {
-							return false;
-						}
-						return true;
-					});
-			if (!snippetItems.isEmpty()) {
-				list.getItems().addAll(snippetItems);
-			}
-		}*/
+		/*
+		 * if (node == null || node instanceof Text) { initSnippets();
+		 * ISnippetLineContext lineContext = new LineContext(node, position);
+		 * Collection<CompletionItem> snippetItems =
+		 * SnippetRegistry.getInstance().getCompletionItems(lineContext, true, context
+		 * -> { if (!"qute".equals(context.getType())) { return false; } return true;
+		 * }); if (!snippetItems.isEmpty()) { list.getItems().addAll(snippetItems); } }
+		 */
 	}
 
 	private void initSnippets() {

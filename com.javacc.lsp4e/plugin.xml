@@ -6,7 +6,7 @@
    <extension
          point="org.eclipse.core.contenttype.contentTypes">
       <content-type
-            base-type="org.eclipse.core.runtime.text"            
+            base-type="org.eclipse.core.runtime.text"
             file-extensions="javacc"
             id="com.javacc.lsp4e"
             name="JavaCC 21"
@@ -35,5 +35,25 @@
             id="com.javacc.lsp4e">
       </contentTypeMapping>
    </extension>
-     
+
+   <extension
+         point="org.eclipse.tm4e.registry.grammars">
+      <grammar
+            path="syntaxes/JavaCC.tmLanguage.json"
+            scopeName="source.javacc">
+      </grammar>
+      <scopeNameContentTypeBinding
+            contentTypeId="com.javacc.lsp4e"
+            scopeName="source.javacc">
+      </scopeNameContentTypeBinding>
+   </extension>
+   
+   <extension
+         point="org.eclipse.tm4e.languageconfiguration.languageConfigurations">
+      <languageConfiguration
+            contentTypeId="com.javacc.lsp4e"
+            path="language-configurations/language-configuration.json">
+      </languageConfiguration>
+   </extension>
+      
 </plugin>

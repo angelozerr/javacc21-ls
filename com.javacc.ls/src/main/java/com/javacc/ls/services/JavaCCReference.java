@@ -10,17 +10,17 @@ import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.ReferenceContext;
 import org.eclipse.lsp4j.jsonrpc.CancelChecker;
 
-import com.javacc.ls.parser.Template;
 import com.javacc.ls.utils.JavaCCPositionUtility;
 import com.javacc.ls.utils.JavaCCSearchUtils;
 import com.javacc.parser.Node;
+import com.javacc.parser.tree.GrammarFile;
 import com.javacc.parser.tree.Identifier;
 
 public class JavaCCReference {
 
-	public List<? extends Location> findReferences(Template template, Position position, ReferenceContext context,
+	public List<? extends Location> findReferences(GrammarFile grammarFile, Position position, ReferenceContext context,
 			CancelChecker cancelChecker) {
-		Node node = JavaCCPositionUtility.findNodeAt(template, position);
+		Node node = JavaCCPositionUtility.findNodeAt(grammarFile, position);
 		if (node == null) {
 			return Collections.emptyList();
 		}

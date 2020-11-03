@@ -7,15 +7,16 @@ import java.util.List;
 import org.eclipse.lsp4j.FoldingRange;
 import org.eclipse.lsp4j.jsonrpc.CancelChecker;
 
-import com.javacc.ls.parser.Template;
 import com.javacc.ls.settings.JavaCCFoldingSettings;
 import com.javacc.parser.Node;
+import com.javacc.parser.tree.GrammarFile;
 
 class JavaCCFoldings {
 
-	public List<FoldingRange> getFoldingRanges(Template template, JavaCCFoldingSettings context,
+	public List<FoldingRange> getFoldingRanges(
+			GrammarFile grammarFile, JavaCCFoldingSettings context,
 			CancelChecker cancelChecker) {
-		Node root = template.getRoot();
+		Node root = grammarFile.getRoot();
 		if (root == null) {
 			return Collections.emptyList();
 		}

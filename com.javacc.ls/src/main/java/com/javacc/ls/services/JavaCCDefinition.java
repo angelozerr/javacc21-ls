@@ -19,10 +19,10 @@ import org.eclipse.lsp4j.LocationLink;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.jsonrpc.CancelChecker;
 
-import com.javacc.ls.parser.Template;
 import com.javacc.ls.utils.JavaCCPositionUtility;
 import com.javacc.ls.utils.JavaCCSearchUtils;
 import com.javacc.parser.Node;
+import com.javacc.parser.tree.GrammarFile;
 import com.javacc.parser.tree.Identifier;
 
 /**
@@ -31,10 +31,9 @@ import com.javacc.parser.tree.Identifier;
  */
 class JavaCCDefinition {
 
-	public List<? extends LocationLink> findDefinition(Template template, Position position,
+	public List<? extends LocationLink> findDefinition(GrammarFile grammarFile, Position position,
 			CancelChecker cancelChecker) {
-
-		Node node = JavaCCPositionUtility.findNodeAt(template, position);
+		Node node = JavaCCPositionUtility.findNodeAt(grammarFile, position);
 		if (node == null) {
 			return Collections.emptyList();
 		}

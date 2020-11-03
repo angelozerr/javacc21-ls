@@ -20,7 +20,9 @@ Require-Bundle: org.eclipse.lsp4e,
  org.eclipse.lsp4j,
  com.google.gson,
  org.eclipse.jdt.core.manipulation,
- org.eclipse.jdt.ui
+ org.eclipse.jdt.ui,
+ org.eclipse.tm4e.core,
+ org.eclipse.tm4e.registry
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Automatic-Module-Name: org.jboss.tools.quarkus.lsp4e
 Bundle-ActivationPolicy: lazy
