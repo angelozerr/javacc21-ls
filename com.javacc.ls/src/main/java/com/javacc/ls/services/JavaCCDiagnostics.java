@@ -11,20 +11,13 @@
 *******************************************************************************/
 package com.javacc.ls.services;
 
-import java.lang.reflect.Field;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.lsp4j.Diagnostic;
-import org.eclipse.lsp4j.DiagnosticSeverity;
-import org.eclipse.lsp4j.Position;
-import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.jsonrpc.CancelChecker;
 
-import com.javacc.Grammar;
-import com.javacc.JavaCCError;
-import com.javacc.JavaCCError.Type;
 import com.javacc.ls.ls.commons.TextDocument;
+import com.javacc.ls.parser.LSPJavaCCErrorReporter;
 import com.javacc.ls.settings.JavaCCValidationSettings;
 import com.javacc.parser.tree.GrammarFile;
 
@@ -48,33 +41,8 @@ class JavaCCDiagnostics {
 		if (validationSettings == null) {
 			validationSettings = JavaCCValidationSettings.DEFAULT;
 		}
-		List<Diagnostic> diagnostics = new ArrayList<Diagnostic>();
-		try {
-			Field f = Grammar.class.getDeclaredField("errors");
-			f.setAccessible(true);
-			List<JavaCCError> errors = (List<JavaCCError>) f.get(grammarFile.getGrammar());
-			for (JavaCCError error : errors) {
-				Range range = new Range(
-						new Position(error.beginLine - 1,
-								error.beginColumn > 0 ? error.beginColumn - 1 : error.beginColumn),
-						new Position(error.beginLine - 1, error.beginColumn));
-				Diagnostic diagnostic = new Diagnostic(range, error.message, getSeverity(error.type), "javacc", null);
-				diagnostics.add(diagnostic);
-			}
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return diagnostics;
-	}
-
-	private DiagnosticSeverity getSeverity(Type type) {
-		switch (type) {
-		case WARNING:
-			return DiagnosticSeverity.Warning;
-		default:
-			return DiagnosticSeverity.Error;
-		}
+		LSPJavaCCErrorReporter reporter = (LSPJavaCCErrorReporter) grammarFile.getGrammar().getReporter();
+		return reporter.getDiagnostics();
 	}
 
 }

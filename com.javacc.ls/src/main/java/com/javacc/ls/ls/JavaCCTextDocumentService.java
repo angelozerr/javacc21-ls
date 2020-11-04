@@ -49,7 +49,7 @@ import org.eclipse.lsp4j.services.TextDocumentService;
 
 import com.javacc.ls.ls.commons.ModelTextDocument;
 import com.javacc.ls.ls.commons.ModelTextDocuments;
-import com.javacc.ls.parser.GrammarFileLoader;
+import com.javacc.ls.parser.JavaCCGrammarParserUtils;
 import com.javacc.ls.services.JavaCCLanguageService;
 import com.javacc.ls.settings.JavaCCValidationSettings;
 import com.javacc.ls.settings.SharedSettings;
@@ -75,7 +75,8 @@ public class JavaCCTextDocumentService implements TextDocumentService {
 	public JavaCCTextDocumentService(JavaCCLanguageServer javaccLanguageServer, SharedSettings sharedSettings) {
 		this.javaccLanguageServer = javaccLanguageServer;
 		this.documents = new ModelTextDocuments<GrammarFile>((document, cancelChecker) -> {
-			return GrammarFileLoader.parse(document.getText(), document.getUri(), () -> cancelChecker.checkCanceled());
+			return JavaCCGrammarParserUtils.parse(document.getText(), document.getUri(),
+					() -> cancelChecker.checkCanceled());
 		});
 		this.sharedSettings = sharedSettings;
 	}
@@ -221,8 +222,8 @@ public class JavaCCTextDocumentService implements TextDocumentService {
 		getGrammarFile(document, (cancelChecker, grammarFile) -> {
 			List<Diagnostic> diagnostics = getJavaCCLanguageService().doDiagnostics(grammarFile, document,
 					getSharedSettings().getValidationSettings(), cancelChecker);
-			javaccLanguageServer.getLanguageClient().publishDiagnostics(
-					new PublishDiagnosticsParams(grammarFile.getGrammar().getFilename(), diagnostics));
+			javaccLanguageServer.getLanguageClient()
+					.publishDiagnostics(new PublishDiagnosticsParams(document.getUri(), diagnostics));
 			return null;
 		});
 	}
