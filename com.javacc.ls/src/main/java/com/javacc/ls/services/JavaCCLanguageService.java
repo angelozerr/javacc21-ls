@@ -27,7 +27,6 @@ import org.eclipse.lsp4j.ReferenceContext;
 import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.jsonrpc.CancelChecker;
 
-import com.javacc.ls.ls.commons.TextDocument;
 import com.javacc.ls.settings.JavaCCCodeLensSettings;
 import com.javacc.ls.settings.JavaCCCompletionSettings;
 import com.javacc.ls.settings.JavaCCFoldingSettings;
@@ -100,17 +99,16 @@ public class JavaCCLanguageService {
 	}
 
 	/**
-	 * Validate the given JavaCC <code>JavaCCParser</code>.
+	 * Validate the given JavaCC <code>grammarFile</code>.
 	 * 
-	 * @param JavaCCParser       the JavaCC JavaCCParser.
-	 * @param document
+	 * @param grammarFile        the grammar file.
 	 * @param validationSettings the validation settings.
 	 * @param cancelChecker      the cancel checker.
 	 * @return the result of the validation.
 	 */
-	public List<Diagnostic> doDiagnostics(GrammarFile grammarFile, TextDocument document,
-			JavaCCValidationSettings validationSettings, CancelChecker cancelChecker) {
-		return diagnostics.doDiagnostics(grammarFile, document, validationSettings, cancelChecker);
+	public List<Diagnostic> doDiagnostics(GrammarFile grammarFile, JavaCCValidationSettings validationSettings,
+			CancelChecker cancelChecker) {
+		return diagnostics.doDiagnostics(grammarFile, validationSettings, cancelChecker);
 	}
 
 	public List<? extends CodeLens> getCodeLens(GrammarFile grammarFile, JavaCCCodeLensSettings codeLensSettings,

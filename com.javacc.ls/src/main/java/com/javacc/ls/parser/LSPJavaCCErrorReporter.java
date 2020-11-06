@@ -35,7 +35,7 @@ public class LSPJavaCCErrorReporter implements JavaCCErrorReporter {
 			Range range = createRange(error);
 			DiagnosticSeverity diagnosticSeverity = getDiagnosticSeverity(error.getType());
 			String message = error.getMessage();
-			String errorCode = null;
+			String errorCode = error.getCode().name();
 			Diagnostic diagnostic = new Diagnostic(range, message, diagnosticSeverity, SOURCE_JAVACC, errorCode);
 			diagnostics.add(diagnostic);
 		}

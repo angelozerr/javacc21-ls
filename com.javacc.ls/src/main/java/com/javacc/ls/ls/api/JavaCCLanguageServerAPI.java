@@ -9,6 +9,11 @@
 *******************************************************************************/
 package com.javacc.ls.ls.api;
 
+import java.util.concurrent.CompletableFuture;
+
+import org.eclipse.lsp4j.TextDocumentIdentifier;
+import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
+import org.eclipse.lsp4j.jsonrpc.services.JsonSegment;
 import org.eclipse.lsp4j.services.LanguageServer;
 
 /**
@@ -17,6 +22,10 @@ import org.eclipse.lsp4j.services.LanguageServer;
  * @author Angelo ZERR
  *
  */
+@JsonSegment("javacc")
 public interface JavaCCLanguageServerAPI extends LanguageServer {
+
+	@JsonRequest
+	CompletableFuture<Integer> generateParser(TextDocumentIdentifier params);
 
 }

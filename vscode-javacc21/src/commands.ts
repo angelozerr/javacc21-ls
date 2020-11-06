@@ -1,5 +1,5 @@
 /**
- *  Copyright (c) 2019 Red Hat, Inc. and others.
+ *  Copyright (c) 2020 Red Hat, Inc. and others.
  *  All rights reserved. This program and the accompanying materials
  *  are made available under the terms of the Eclipse Public License v1.0
  *  which accompanies this distribution, and is available at
@@ -25,4 +25,18 @@ export namespace Commands {
      */
     export const EDITOR_SHOW_REFERENCES = 'editor.action.showReferences';
 
+    /**
+     * Render markdown string to html string
+     */
+    export const MARKDOWN_API_RENDER = 'markdown.api.render';
+
+    export const OPEN_DOCS = "javacc.open.docs";
+
+    export const OPEN_DOCS_HOME = "javacc.open.docs.home";
+
+    /**
+     * JavaCC commands
+     */
+
+    export const GENERATE_PARSER = "javacc.generate.parser";
 }

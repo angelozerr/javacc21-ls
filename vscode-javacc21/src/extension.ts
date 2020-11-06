@@ -13,17 +13,39 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import * as path from 'path';
 import * as requirements from './languageServer/requirements';
 
-import { DidChangeConfigurationNotification, LanguageClientOptions, LanguageClient, ReferencesRequest } from 'vscode-languageclient';
+import { DidChangeConfigurationNotification, LanguageClientOptions, LanguageClient, ReferencesRequest, TextDocumentIdentifier, RequestType } from 'vscode-languageclient';
 import { ExtensionContext, commands, window, workspace, Uri, Position } from 'vscode';
 import { prepareExecutable } from './languageServer/javaServerStarter';
 import { registerConfigurationUpdateCommand, registerOpenURICommand, CommandKind } from './lsp-commands';
 import { Commands } from './commands';
+import { markdownPreviewProvider } from './markdownPreviewProvider';
+
+namespace GenerateParserRequest {
+  export const type: RequestType<TextDocumentIdentifier, any, any, any> = new RequestType('javacc/generateParser');
+}
 
 let languageClient: LanguageClient;
 
 export function activate(context: ExtensionContext) {
+
+  // Register commands for XML documentation
+  context.subscriptions.push(markdownPreviewProvider);
+  context.subscriptions.push(commands.registerCommand(Commands.OPEN_DOCS_HOME, async () => {
+    const uri = 'README.md';
+    const title = 'JavaCC Documentation';
+    const sectionId = '';
+    markdownPreviewProvider.show(context.asAbsolutePath(path.join('docs', uri)), title, sectionId, context);
+  }));
+  context.subscriptions.push(commands.registerCommand(Commands.OPEN_DOCS, async (params: { page: string, section: string }) => {
+    const page = params.page.endsWith('.md') ? params.page.substr(0, params.page.length - 3) : params.page;
+    const uri = page + '.md';
+    const sectionId = params.section || '';
+    const title = 'JavaCC ' + page;
+    markdownPreviewProvider.show(context.asAbsolutePath(path.join('docs', uri)), title, sectionId, context);
+  }));
 
   connectToJavaCC21LS(context).then(() => {
 
@@ -34,21 +56,10 @@ export function activate(context: ExtensionContext) {
       }
     });
   });
-
-  function bindRequest(request: string) {
-    languageClient.onRequest(request, async (params: any) =>
-      <any>await commands.executeCommand("java.execute.workspaceCommand", request, params)
-    );
-  }
-
-  function bindNotification(notification: string) {
-    context.subscriptions.push(commands.registerCommand(notification, (event: any) => {
-      languageClient.sendNotification(notification, event);
-    }));
-  }
 }
 
 export function deactivate() {
+  languageClient.stop();
 }
 
 function connectToJavaCC21LS(context: ExtensionContext) {
@@ -89,32 +100,41 @@ function connectToJavaCC21LS(context: ExtensionContext) {
           });
         });
       }));
+
+      // Register custom JavaCC commands
+      context.subscriptions.push(commands.registerCommand(Commands.GENERATE_PARSER, async (params) => {
+        const uri = window.activeTextEditor.document.uri;
+        const param = TextDocumentIdentifier.create(uri.toString());
+        let text = languageClient.sendRequest(GenerateParserRequest.type, param);
+      }));
+
+
     });
   });
 
   /**
-   * Returns a json object with key 'quarkus' and a json object value that
-   * holds all quarkus. settings.
+   * Returns a json object with key 'javacc' and a json object value that
+   * holds all javacc. settings.
    *
    * Returns: {
-   *            'quarkus': {...}
+   *            'javacc': {...}
    *          }
    */
   function getJavaCC21Settings(): JSON {
-    const configQuarkus = workspace.getConfiguration().get('javacc');
-    let quarkus;
-    if (!configQuarkus) { // Set default preferences if not provided
+    const configJavaCC = workspace.getConfiguration().get('javacc');
+    let javacc;
+    if (!configJavaCC) { // Set default preferences if not provided
       const defaultValue =
       {
-        qute: {
+        javacc: {
 
         }
       };
-      quarkus = defaultValue;
+      javacc = defaultValue;
     } else {
-      const x = JSON.stringify(configQuarkus); // configQuarkus is not a JSON type
-      quarkus = { quarkus: JSON.parse(x) };
+      const x = JSON.stringify(configJavaCC); // configJavaCC is not a JSON type
+      javacc = { javacc: JSON.parse(x) };
     }
-    return quarkus;
+    return javacc;
   }
 }

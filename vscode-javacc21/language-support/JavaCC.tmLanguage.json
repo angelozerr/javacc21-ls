@@ -5,10 +5,39 @@
   ],
   "patterns": [
     {
+      "include": "#inject_declaration"
+    },
+    {
       "include": "#comments"
+    },
+    {
+      "include": "#production"
     }
   ],
   "repository": {
+    "inject_declaration": {
+			"begin": "(?=\\w?[\\w\\s-]*\\b(?:INJECT)\\s+[\\w$]+)",
+			"beginCaptures": {
+				"1": {
+					"name": "keyword.control.javacc"
+				},
+				"2": {
+					"name": "punctuation.definition.parameters.begin.bracket.round.javacc"
+				}
+			},
+			"end": "\\)",
+			"endCaptures": {
+				"0": {
+					"name": "punctuation.definition.parameters.end.bracket.round.javacc"
+				}
+			},
+			"name": "meta.function-call.javacc",
+			"patterns": [
+				{
+					"include": ""
+				}
+			]
+		},
     "comments": {
       "patterns": [
         {
@@ -55,6 +84,53 @@
               },
               "end": "\\n",
               "name": "comment.line.double-slash.javacc"
+            }
+          ]
+        }
+      ]
+    },
+    "production": {},
+    "strings": {
+      "patterns": [
+        {
+          "begin": "\"",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.begin.javacc"
+            }
+          },
+          "end": "\"",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.end.javacc"
+            }
+          },
+          "name": "string.quoted.double.javacc",
+          "patterns": [
+            {
+              "match": "\\\\.",
+              "name": "constant.character.escape.javacc"
+            }
+          ]
+        },
+        {
+          "begin": "'",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.begin.javacc"
+            }
+          },
+          "end": "'",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.end.javacc"
+            }
+          },
+          "name": "string.quoted.single.javacc",
+          "patterns": [
+            {
+              "match": "\\\\.",
+              "name": "constant.character.escape.javacc"
             }
           ]
         }

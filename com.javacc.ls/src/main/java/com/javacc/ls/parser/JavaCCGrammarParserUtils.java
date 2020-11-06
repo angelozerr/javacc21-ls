@@ -2,7 +2,6 @@ package com.javacc.ls.parser;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.lang.reflect.Field;
 import java.net.URLDecoder;
 
 import org.eclipse.lsp4j.jsonrpc.CancelChecker;
@@ -11,7 +10,6 @@ import com.javacc.Grammar;
 import com.javacc.JavaCCOptions;
 import com.javacc.parser.JavaCCParser;
 import com.javacc.parser.ParseException;
-import com.javacc.parser.Token;
 import com.javacc.parser.tree.GrammarFile;
 
 public class JavaCCGrammarParserUtils {
@@ -44,16 +42,10 @@ public class JavaCCGrammarParserUtils {
 		try {
 			return parser.Root();
 		} catch (ParseException e) {
-			try {
-				Field f = ParseException.class.getDeclaredField("token");
-				f.setAccessible(true);
-				Token token = (Token) f.get(e);
-				grammar.addParseError(token, e.getMessage());
-			} catch (Exception ex) {
-				ex.printStackTrace();
-			}
+			grammar.addParseError(e.getToken(), e.getMessage());
+
 		} catch (IOException e) {
-			e.printStackTrace();
+			// Should never occurs
 		}
 		GrammarFile grammarFile = new GrammarFile();
 		grammarFile.setGrammar(grammar);

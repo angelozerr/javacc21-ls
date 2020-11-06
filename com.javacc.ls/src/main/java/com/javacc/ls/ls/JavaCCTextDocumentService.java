@@ -9,6 +9,7 @@
 *******************************************************************************/
 package com.javacc.ls.ls;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -47,6 +48,8 @@ import org.eclipse.lsp4j.jsonrpc.CancelChecker;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4j.services.TextDocumentService;
 
+import com.javacc.Grammar;
+import com.javacc.MetaParseException;
 import com.javacc.ls.ls.commons.ModelTextDocument;
 import com.javacc.ls.ls.commons.ModelTextDocuments;
 import com.javacc.ls.parser.JavaCCGrammarParserUtils;
@@ -54,7 +57,10 @@ import com.javacc.ls.services.JavaCCLanguageService;
 import com.javacc.ls.settings.JavaCCValidationSettings;
 import com.javacc.ls.settings.SharedSettings;
 import com.javacc.ls.utils.JavaCCPositionUtility;
+import com.javacc.parser.ParseException;
 import com.javacc.parser.tree.GrammarFile;
+
+import freemarker.template.TemplateException;
 
 /**
  * LSP text document service for 'application.properties' file.
@@ -220,7 +226,7 @@ public class JavaCCTextDocumentService implements TextDocumentService {
 
 	private void triggerValidationFor(ModelTextDocument<GrammarFile> document) {
 		getGrammarFile(document, (cancelChecker, grammarFile) -> {
-			List<Diagnostic> diagnostics = getJavaCCLanguageService().doDiagnostics(grammarFile, document,
+			List<Diagnostic> diagnostics = getJavaCCLanguageService().doDiagnostics(grammarFile,
 					getSharedSettings().getValidationSettings(), cancelChecker);
 			javaccLanguageServer.getLanguageClient()
 					.publishDiagnostics(new PublishDiagnosticsParams(document.getUri(), diagnostics));
@@ -296,6 +302,50 @@ public class JavaCCTextDocumentService implements TextDocumentService {
 
 	public SharedSettings getSharedSettings() {
 		return sharedSettings;
+	}
+
+	public CompletableFuture<Integer> generateParser(TextDocumentIdentifier params) {
+		return getGrammarFile(params, (cancelChecker, grammarFile) -> {
+			Grammar grammar = grammarFile.getGrammar();
+			try {
+				grammar.createOutputDir();
+				grammar.semanticize();
+
+				if (!grammar.getOptions().getUserDefinedLexer() && grammar.getErrorCount() == 0) {
+					grammar.generateLexer();
+				}
+
+				grammar.generateFiles();
+
+				if ((grammar.getErrorCount() == 0)) {
+					if (grammar.getWarningCount() == 0) {
+						System.out.println("Parser generated successfully.");
+					} else {
+						System.out.println(
+								"Parser generated with 0 errors and " + grammar.getWarningCount() + " warnings.");
+					}
+					return 0;
+				} else {
+					System.out.println("Detected " + grammar.getErrorCount() + " errors and "
+							+ grammar.getWarningCount() + " warnings.");
+					return (grammar.getErrorCount() == 0) ? 0 : 1;
+				}
+			} catch (MetaParseException e) {
+				System.out.println("Detected " + grammar.getErrorCount() + " errors and " + grammar.getWarningCount()
+						+ " warnings.");
+				return 1;
+			} catch (ParseException e) {
+				System.out.println(e.toString());
+				System.out.println("Detected " + (grammar.getErrorCount() + 1) + " errors and "
+						+ grammar.getWarningCount() + " warnings.");
+				return 1;
+			} catch (TemplateException | IOException e) {
+				System.out.println(e.toString());
+				System.out.println("Detected " + (grammar.getErrorCount() + 1) + " errors and "
+						+ grammar.getWarningCount() + " warnings.");
+				return 1;
+			}
+		});
 	}
 
 }
