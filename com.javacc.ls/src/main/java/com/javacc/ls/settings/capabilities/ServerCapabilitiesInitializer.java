@@ -44,6 +44,7 @@ public class ServerCapabilitiesInitializer {
 		serverCapabilities
 				.setDocumentSymbolProvider(!clientCapabilities.isDocumentSymbolDynamicRegistrationSupported());
 		serverCapabilities.setFoldingRangeProvider(!clientCapabilities.isRangeFoldingDynamicRegistrationSupported());
+		serverCapabilities.setDocumentFormattingProvider(!clientCapabilities.isFormattingDynamicRegistered());
 		/*
 		 * serverCapabilities.setHoverProvider(!clientCapabilities.
 		 * isHoverDynamicRegistered());

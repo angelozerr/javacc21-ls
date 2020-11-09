@@ -11,9 +11,16 @@
 *******************************************************************************/
 package com.javacc.ls.settings;
 
-/**
- * Qute formatting settings
- */
-public class JavaCCFormattingSettings {
+import org.eclipse.lsp4j.FormattingOptions;
 
+/**
+ * Composite settings class
+ * 
+ * Provides a new SharedSettings instance with a second setting merged
+ */
+public class CompositeSettings extends SharedSettings {
+	public CompositeSettings(SharedSettings settings, FormattingOptions formatting) {
+		super(settings);
+		this.getFormattingSettings().merge(formatting);
+	}
 }

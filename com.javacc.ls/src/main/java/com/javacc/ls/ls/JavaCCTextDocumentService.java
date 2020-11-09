@@ -29,6 +29,7 @@ import org.eclipse.lsp4j.DidChangeTextDocumentParams;
 import org.eclipse.lsp4j.DidCloseTextDocumentParams;
 import org.eclipse.lsp4j.DidOpenTextDocumentParams;
 import org.eclipse.lsp4j.DidSaveTextDocumentParams;
+import org.eclipse.lsp4j.DocumentFormattingParams;
 import org.eclipse.lsp4j.DocumentHighlight;
 import org.eclipse.lsp4j.DocumentLink;
 import org.eclipse.lsp4j.DocumentLinkParams;
@@ -44,6 +45,7 @@ import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.TextDocumentClientCapabilities;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.TextDocumentPositionParams;
+import org.eclipse.lsp4j.TextEdit;
 import org.eclipse.lsp4j.jsonrpc.CancelChecker;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4j.services.TextDocumentService;
@@ -54,6 +56,7 @@ import com.javacc.ls.ls.commons.ModelTextDocument;
 import com.javacc.ls.ls.commons.ModelTextDocuments;
 import com.javacc.ls.parser.JavaCCGrammarParserUtils;
 import com.javacc.ls.services.JavaCCLanguageService;
+import com.javacc.ls.settings.CompositeSettings;
 import com.javacc.ls.settings.JavaCCValidationSettings;
 import com.javacc.ls.settings.SharedSettings;
 import com.javacc.ls.utils.JavaCCPositionUtility;
@@ -188,6 +191,14 @@ public class JavaCCTextDocumentService implements TextDocumentService {
 		return getGrammarFile(params.getTextDocument(), (cancelChecker, grammarFile) -> {
 			return getJavaCCLanguageService().getFoldingRanges(grammarFile, sharedSettings.getFoldingSettings(),
 					cancelChecker);
+		});
+	}
+
+	@Override
+	public CompletableFuture<List<? extends TextEdit>> formatting(DocumentFormattingParams params) {
+		return getGrammarFile(params.getTextDocument(), (cancelChecker, grammarFile) -> {
+			CompositeSettings settings = new CompositeSettings(getSharedSettings(), params.getOptions());
+			return getJavaCCLanguageService().format(grammarFile, null, settings);
 		});
 	}
 

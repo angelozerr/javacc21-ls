@@ -26,7 +26,7 @@ import com.javacc.ls.utils.JSONUtility;
  * eg: {"symbols" : {...}, "validation" : {...}}
  * 
  */
-public class QuteGeneralClientSettings {
+public class JavaCCGeneralClientSettings {
 	private JavaCCValidationSettings validation;
 
 	/**
@@ -53,7 +53,7 @@ public class QuteGeneralClientSettings {
 	 * @param initializationOptionsSettings the initialization options
 	 * @return the general settings from the given initialization options
 	 */
-	public static QuteGeneralClientSettings getGeneralQuarkusSettings(Object initializationOptionsSettings) {
-		return JSONUtility.toModel(initializationOptionsSettings, QuteGeneralClientSettings.class);
+	public static JavaCCGeneralClientSettings getGeneralJavaCCSettings(Object initializationOptionsSettings) {
+		return JSONUtility.toModel(initializationOptionsSettings, JavaCCGeneralClientSettings.class);
 	}
 }

@@ -23,15 +23,18 @@ import org.eclipse.lsp4j.FoldingRange;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.LocationLink;
 import org.eclipse.lsp4j.Position;
+import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.ReferenceContext;
 import org.eclipse.lsp4j.SymbolInformation;
+import org.eclipse.lsp4j.TextEdit;
 import org.eclipse.lsp4j.jsonrpc.CancelChecker;
 
 import com.javacc.ls.settings.JavaCCCodeLensSettings;
 import com.javacc.ls.settings.JavaCCCompletionSettings;
 import com.javacc.ls.settings.JavaCCFoldingSettings;
-import com.javacc.ls.settings.JavaCCFormattingSettings;
+import com.javacc.ls.settings.JavaCCFormattingOptions;
 import com.javacc.ls.settings.JavaCCValidationSettings;
+import com.javacc.ls.settings.SharedSettings;
 import com.javacc.parser.tree.GrammarFile;
 
 /**
@@ -46,6 +49,7 @@ public class JavaCCLanguageService {
 	private final JavaCCCodeLens codelens;
 	private final JavaCCHighlighting highlighting;
 	private final JavaCCDefinition definition;
+	private final JavaCCFormatter formatter;
 	private final JavaCCReference references;
 	private final JavaCCSymbolsProvider symbolsProvider;
 	private final JavaCCDiagnostics diagnostics;
@@ -57,6 +61,7 @@ public class JavaCCLanguageService {
 		this.codelens = new JavaCCCodeLens();
 		this.highlighting = new JavaCCHighlighting();
 		this.definition = new JavaCCDefinition();
+		this.formatter = new JavaCCFormatter();
 		this.references = new JavaCCReference();
 		this.symbolsProvider = new JavaCCSymbolsProvider();
 		this.diagnostics = new JavaCCDiagnostics();
@@ -75,7 +80,7 @@ public class JavaCCLanguageService {
 	 * @return completion list for the given position
 	 */
 	public CompletionList doComplete(GrammarFile grammarFile, Position position,
-			JavaCCCompletionSettings completionSettings, JavaCCFormattingSettings formattingSettings,
+			JavaCCCompletionSettings completionSettings, JavaCCFormattingOptions formattingSettings,
 			CancelChecker cancelChecker) {
 		return completions.doComplete(grammarFile, position, completionSettings, formattingSettings, cancelChecker);
 	}
@@ -128,5 +133,9 @@ public class JavaCCLanguageService {
 
 	public List<DocumentLink> findDocumentLinks(GrammarFile grammarFile) {
 		return documentLink.findDocumentLinks(grammarFile);
+	}
+
+	public List<? extends TextEdit> format(GrammarFile grammarFile, Range range, SharedSettings settings) {
+		return formatter.format(grammarFile, range, settings);
 	}
 }

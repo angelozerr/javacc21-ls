@@ -21,16 +21,24 @@ public class SharedSettings {
 
 	private final JavaCCCompletionSettings completionSettings;
 	private final JavaCCCodeLensSettings codeLensSettings;
-	private final JavaCCFormattingSettings formattingSettings;
+	private final JavaCCFormattingOptions formattingSettings;
 	private final JavaCCValidationSettings validationSettings;
 	private final JavaCCFoldingSettings foldingSettings;
 
 	public SharedSettings() {
 		this.completionSettings = new JavaCCCompletionSettings();
 		this.codeLensSettings = new JavaCCCodeLensSettings();
-		this.formattingSettings = new JavaCCFormattingSettings();
+		this.formattingSettings = new JavaCCFormattingOptions();
 		this.validationSettings = new JavaCCValidationSettings();
 		this.foldingSettings = new JavaCCFoldingSettings();
+	}
+
+	public SharedSettings(SharedSettings newSettings) {
+		this();
+		//this.completionSettings.merge(newSettings.getCompletionSettings());
+		this.formattingSettings.merge(newSettings.getFormattingSettings());
+		// this.validationSettings.merge(newSettings.getValidationSettings());
+		// this.codeLensSettings.merge(newSettings.getCodeLensSettings());
 	}
 
 	/**
@@ -56,7 +64,7 @@ public class SharedSettings {
 	 * 
 	 * @return the formatting settings.
 	 */
-	public JavaCCFormattingSettings getFormattingSettings() {
+	public JavaCCFormattingOptions getFormattingSettings() {
 		return formattingSettings;
 	}
 

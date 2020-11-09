@@ -15,6 +15,7 @@ import static com.javacc.ls.settings.capabilities.ServerCapabilitiesConstants.DE
 import static com.javacc.ls.settings.capabilities.ServerCapabilitiesConstants.DOCUMENT_HIGHLIGHT_ID;
 import static com.javacc.ls.settings.capabilities.ServerCapabilitiesConstants.DOCUMENT_SYMBOL_ID;
 import static com.javacc.ls.settings.capabilities.ServerCapabilitiesConstants.FOLDING_RANGE_ID;
+import static com.javacc.ls.settings.capabilities.ServerCapabilitiesConstants.FORMATTING_ID;
 import static com.javacc.ls.settings.capabilities.ServerCapabilitiesConstants.LINK_ID;
 import static com.javacc.ls.settings.capabilities.ServerCapabilitiesConstants.REFERENCES_ID;
 import static com.javacc.ls.settings.capabilities.ServerCapabilitiesConstants.TEXT_DOCUMENT_CODE_LENS;
@@ -22,6 +23,7 @@ import static com.javacc.ls.settings.capabilities.ServerCapabilitiesConstants.TE
 import static com.javacc.ls.settings.capabilities.ServerCapabilitiesConstants.TEXT_DOCUMENT_DEFINITION;
 import static com.javacc.ls.settings.capabilities.ServerCapabilitiesConstants.TEXT_DOCUMENT_DOCUMENT_SYMBOL;
 import static com.javacc.ls.settings.capabilities.ServerCapabilitiesConstants.TEXT_DOCUMENT_FOLDING_RANGE;
+import static com.javacc.ls.settings.capabilities.ServerCapabilitiesConstants.TEXT_DOCUMENT_FORMATTING;
 import static com.javacc.ls.settings.capabilities.ServerCapabilitiesConstants.TEXT_DOCUMENT_HIGHLIGHT;
 import static com.javacc.ls.settings.capabilities.ServerCapabilitiesConstants.TEXT_DOCUMENT_LINK;
 import static com.javacc.ls.settings.capabilities.ServerCapabilitiesConstants.TEXT_DOCUMENT_REFERENCES;
@@ -73,6 +75,9 @@ public class JavaCCCapabilityManager {
 		}
 		if (this.getClientCapabilities().isCodeLensDynamicRegistered()) {
 			registerCapability(CODE_LENS_ID, TEXT_DOCUMENT_CODE_LENS);
+		}
+		if (this.getClientCapabilities().isFormattingDynamicRegistered()) {
+			registerCapability(FORMATTING_ID, TEXT_DOCUMENT_FORMATTING);
 		}
 		if (this.getClientCapabilities().isRangeFoldingDynamicRegistrationSupported()) {
 			registerCapability(FOLDING_RANGE_ID, TEXT_DOCUMENT_FOLDING_RANGE);

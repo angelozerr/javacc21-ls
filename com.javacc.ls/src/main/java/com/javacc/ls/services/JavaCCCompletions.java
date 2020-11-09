@@ -23,7 +23,7 @@ import com.javacc.ls.ls.commons.BadLocationException;
 import com.javacc.ls.ls.commons.snippets.ISnippetLineContext;
 import com.javacc.ls.ls.commons.snippets.SnippetRegistry;
 import com.javacc.ls.settings.JavaCCCompletionSettings;
-import com.javacc.ls.settings.JavaCCFormattingSettings;
+import com.javacc.ls.settings.JavaCCFormattingOptions;
 import com.javacc.ls.utils.JavaCCPositionUtility;
 import com.javacc.parser.Node;
 import com.javacc.parser.tree.GrammarFile;
@@ -80,7 +80,7 @@ class JavaCCCompletions {
 	 * @return completion list for the given position
 	 */
 	public CompletionList doComplete(GrammarFile template, Position position,
-			JavaCCCompletionSettings completionSettings, JavaCCFormattingSettings formattingSettings,
+			JavaCCCompletionSettings completionSettings, JavaCCFormattingOptions formattingSettings,
 			CancelChecker cancelChecker) {
 		CompletionList list = new CompletionList();
 		Node node = JavaCCPositionUtility.findNodeAt(template, position);
