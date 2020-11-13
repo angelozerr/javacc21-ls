@@ -5,39 +5,47 @@
   ],
   "patterns": [
     {
-      "include": "#inject_declaration"
+      "include": "#strings"
     },
     {
       "include": "#comments"
     },
     {
-      "include": "#production"
+      "name": "keyword.other.javacc",
+      "match": "\\b(options|OPTIONS|INCLUDE|LOOKAHEAD|FAIL|ASSERT|SCAN|IGNORE_CASE|PARSER_BEGIN|PARSER_END|TOKEN|SPECIAL_TOKEN|MORE|SKIP|TOKEN_MGR_DECLS|EOF|ATTEMP|RECOVER|UPTO|LEXICAL_STATE)\\b"
+    },
+    {
+      "include": "#inject"
     }
   ],
   "repository": {
-    "inject_declaration": {
-			"begin": "(?=\\w?[\\w\\s-]*\\b(?:INJECT)\\s+[\\w$]+)",
-			"beginCaptures": {
-				"1": {
-					"name": "keyword.control.javacc"
-				},
-				"2": {
-					"name": "punctuation.definition.parameters.begin.bracket.round.javacc"
-				}
-			},
-			"end": "\\)",
-			"endCaptures": {
-				"0": {
-					"name": "punctuation.definition.parameters.end.bracket.round.javacc"
-				}
-			},
-			"name": "meta.function-call.javacc",
-			"patterns": [
-				{
-					"include": ""
-				}
-			]
-		},
+    "inject": {
+      "begin": "\\b(INJECT)\\b",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.other.javacc"
+        }
+      },
+      "end": "}",
+      "name": "meta.inject.javacc",
+      "patterns": [
+        {
+          "begin": "{",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.section.inject.begin.bracket.curly.javacc"
+            }
+          },
+          "end": "(?=})",
+          "contentName": "meta.inject.import.java",
+          "patterns": [
+            {
+              "include": "source.java"
+            }
+          ]
+        }
+      ]
+    },
     "comments": {
       "patterns": [
         {
@@ -106,27 +114,6 @@
             }
           },
           "name": "string.quoted.double.javacc",
-          "patterns": [
-            {
-              "match": "\\\\.",
-              "name": "constant.character.escape.javacc"
-            }
-          ]
-        },
-        {
-          "begin": "'",
-          "beginCaptures": {
-            "0": {
-              "name": "punctuation.definition.string.begin.javacc"
-            }
-          },
-          "end": "'",
-          "endCaptures": {
-            "0": {
-              "name": "punctuation.definition.string.end.javacc"
-            }
-          },
-          "name": "string.quoted.single.javacc",
           "patterns": [
             {
               "match": "\\\\.",
