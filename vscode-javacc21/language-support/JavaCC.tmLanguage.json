@@ -14,6 +14,9 @@
       "include": "#javacc_parser"
     },
     {
+      "include": "#production"
+    },
+    {
       "include": "#inject"
     },
     {
@@ -26,24 +29,46 @@
   ],
   "repository": {
     "javacc_options": {
+      "name": "meta.options.javacc",
+      "end": "(?<=\\})",
       "begin": "\\b(options|OPTIONS)\\b",
       "beginCaptures": {
-        "1": {
-          "name": "keyword.other.javacc"
+        "0": {
+          "name": "keyword.other.options.javacc"
         }
       },
-      "patterns": [
-        {
-          "include": "#strings"
+      "patterns": [{
+        "name": "meta.options.block.javacc",
+        "begin": "\\{",
+        "beginCaptures": {
+          "0": {
+            "name": "punctuation.block.begin.javacc"
+          }
         },
-        {
-          "include": "#numbers"
+        "end": "\\}",
+        "endCaptures": {
+          "0": {
+            "name": "punctuation.block.end.javacc"
+          }
         },
-        {
-          "include": "#constants-and-special-vars"
-        }
-      ],
-      "end": "}"
+        "patterns": [{
+            "name": "variable.other.option.javacc",
+            "match": "\\b(QUIET|TABS_TO_SPACES|DEBUG_PARSER|DEBUG_LEXER|FAULT_TOLERANT|PRESERVE_LINE_ENDINGS|JAVA_UNICODE_ESCAPE|IGNORE_CASE|USER_DEFINED_LEXER|LEXER_USES_PARSER|PARSER_PACKAGE|PARSER_CLASS|DEBUG_TOKEN_MANAGER|IGNORE_CASE|JAVA_UNICODE_ESCAPE|USER_TOKEN_MANAGER|USER_DEFINED_LEXER|TOKEN_MANAGER_USES_PARSER)\\b"
+          },
+          {
+            "include": "#strings"
+          },
+          {
+            "include": "#comments"
+          },
+          {
+            "include": "#constants-and-special-vars"
+          },
+          {
+            "include": "#numbers"
+          }
+        ]
+      }]
     },
     "javacc_parser": {
       "begin": "\\b(PARSER_BEGIN)\\b\\s*\\(?\\s*([A-Za-z_$])?\\s*\\)?\\s*",
@@ -64,6 +89,7 @@
         }
       }
     },
+    "production": {},
     "inject": {
       "begin": "\\b(INJECT)\\b",
       "beginCaptures": {
