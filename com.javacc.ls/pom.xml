@@ -16,6 +16,7 @@
 		<maven.build.timestamp.format>yyyyMMdd-HHmm</maven.build.timestamp.format>
 		<dev.build.timestamp>${maven.build.timestamp}</dev.build.timestamp>
 		<lsp4j.version>0.8.1</lsp4j.version>
+		<junit.version>5.6.1</junit.version>
 		<jboss.releases.repo.id>jboss-releases-repository</jboss.releases.repo.id>
 		<jboss.releases.repo.url>https://repository.jboss.org/nexus/service/local/staging/deploy/maven2/</jboss.releases.repo.url>
 		<jboss.snapshots.repo.id>jboss-snapshots-repository</jboss.snapshots.repo.id>
@@ -119,16 +120,28 @@
 			<systemPath>${project.basedir}/lib/freemarker.jar</systemPath>
 		</dependency>
 		<dependency>
-            <groupId>javacc21</groupId>
-            <artifactId>javacc21</artifactId>
-            <version>1.0</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/lib/javacc.jar</systemPath>
-        </dependency>
+			<groupId>javacc21</groupId>
+			<artifactId>javacc21</artifactId>
+			<version>1.0</version>
+			<scope>system</scope>
+			<systemPath>${project.basedir}/lib/javacc.jar</systemPath>
+		</dependency>
 		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>4.12</version>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-api</artifactId>
+			<version>${junit.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-engine</artifactId>
+			<version>${junit.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-params</artifactId>
+			<version>${junit.version}</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>

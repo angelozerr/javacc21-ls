@@ -8,17 +8,62 @@
       "include": "#strings"
     },
     {
+      "include": "#javacc_options"
+    },
+    {
+      "include": "#javacc_parser"
+    },
+    {
+      "include": "#inject"
+    },
+    {
       "include": "#comments"
     },
     {
       "name": "keyword.other.javacc",
-      "match": "\\b(options|OPTIONS|INCLUDE|LOOKAHEAD|FAIL|ASSERT|SCAN|IGNORE_CASE|PARSER_BEGIN|PARSER_END|TOKEN|SPECIAL_TOKEN|MORE|SKIP|TOKEN_MGR_DECLS|EOF|ATTEMP|RECOVER|UPTO|LEXICAL_STATE)\\b"
-    },
-    {
-      "include": "#inject"
+      "match": "\\b(INCLUDE|INCLUDE_GRAMMAR|LOOKAHEAD|FAIL|ASSERT|SCAN|IGNORE_CASE|TOKEN|SPECIAL_TOKEN|MORE|SKIP|TOKEN_MGR_DECLS|EOF|ATTEMP|RECOVER|UPTO|LEXICAL_STATE)\\b"
     }
   ],
   "repository": {
+    "javacc_options": {
+      "begin": "\\b(options|OPTIONS)\\b",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.other.javacc"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#strings"
+        },
+        {
+          "include": "#numbers"
+        },
+        {
+          "include": "#constants-and-special-vars"
+        }
+      ],
+      "end": "}"
+    },
+    "javacc_parser": {
+      "begin": "\\b(PARSER_BEGIN)\\b\\s*\\(?\\s*([A-Za-z_$])?\\s*\\)?\\s*",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.other.javacc"
+        }
+      },
+      "patterns": [
+        {
+          "include": "source.java"
+        }
+      ],
+      "end": "\\b(PARSER_END)\\b\\s*\\(?\\s*([A-Za-z_$])?\\s*\\)?\\s*",
+      "endCaptures": {
+        "1": {
+          "name": "keyword.other.javacc"
+        }
+      }
+    },
     "inject": {
       "begin": "\\b(INJECT)\\b",
       "beginCaptures": {
@@ -97,7 +142,6 @@
         }
       ]
     },
-    "production": {},
     "strings": {
       "patterns": [
         {
@@ -120,6 +164,34 @@
               "name": "constant.character.escape.javacc"
             }
           ]
+        }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        {
+          "match": "(?x)\n\\b(?<!\\$)\n0(x|X)\n(\n  (?<!\\.)[0-9a-fA-F]([0-9a-fA-F_]*[0-9a-fA-F])?[Ll]?(?!\\.)\n  |\n  (\n    [0-9a-fA-F]([0-9a-fA-F_]*[0-9a-fA-F])?\\.?\n    |\n    ([0-9a-fA-F]([0-9a-fA-F_]*[0-9a-fA-F])?)?\\.[0-9a-fA-F]([0-9a-fA-F_]*[0-9a-fA-F])?\n  )\n  [Pp][+-]?[0-9]([0-9_]*[0-9])?[FfDd]?\n)\n\\b(?!\\$)",
+          "name": "constant.numeric.hex.javacc"
+        },
+        {
+          "match": "\\b(?<!\\$)0(b|B)[01]([01_]*[01])?[Ll]?\\b(?!\\$)",
+          "name": "constant.numeric.binary.javacc"
+        },
+        {
+          "match": "\\b(?<!\\$)0[0-7]([0-7_]*[0-7])?[Ll]?\\b(?!\\$)",
+          "name": "constant.numeric.octal.javacc"
+        },
+        {
+          "match": "(?x)\n(?<!\\$)\n(\n  \\b[0-9]([0-9_]*[0-9])?\\.\\B(?!\\.)\n  |\n  \\b[0-9]([0-9_]*[0-9])?\\.([Ee][+-]?[0-9]([0-9_]*[0-9])?)[FfDd]?\\b\n  |\n  \\b[0-9]([0-9_]*[0-9])?\\.([Ee][+-]?[0-9]([0-9_]*[0-9])?)?[FfDd]\\b\n  |\n  \\b[0-9]([0-9_]*[0-9])?\\.([0-9]([0-9_]*[0-9])?)([Ee][+-]?[0-9]([0-9_]*[0-9])?)?[FfDd]?\\b\n  |\n  (?<!\\.)\\B\\.[0-9]([0-9_]*[0-9])?([Ee][+-]?[0-9]([0-9_]*[0-9])?)?[FfDd]?\\b\n  |\n  \\b[0-9]([0-9_]*[0-9])?([Ee][+-]?[0-9]([0-9_]*[0-9])?)[FfDd]?\\b\n  |\n  \\b[0-9]([0-9_]*[0-9])?([Ee][+-]?[0-9]([0-9_]*[0-9])?)?[FfDd]\\b\n  |\n  \\b(0|[1-9]([0-9_]*[0-9])?)(?!\\.)[Ll]?\\b\n)\n(?!\\$)",
+          "name": "constant.numeric.decimal.javacc"
+        }
+      ]
+    },
+    "constants-and-special-vars": {
+      "patterns": [
+        {
+          "match": "\\b(true|false|null)\\b",
+          "name": "constant.language.javacc"
         }
       ]
     }

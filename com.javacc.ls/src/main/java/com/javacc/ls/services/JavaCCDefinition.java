@@ -41,9 +41,6 @@ class JavaCCDefinition {
 			return Collections.emptyList();
 		}
 		Identifier identifier = (Identifier) node;
-		if (JavaCCSearchUtils.isProductionIdentifier(identifier)) {
-			return Collections.emptyList();
-		}
 		Identifier originIdentifier = JavaCCSearchUtils.searchOriginIdentifier(identifier);
 		if (originIdentifier != null) {
 			List<LocationLink> locations = new ArrayList<>();
@@ -52,7 +49,6 @@ class JavaCCDefinition {
 			return locations;
 		}
 		return Collections.emptyList();
-
 	}
 
 }
