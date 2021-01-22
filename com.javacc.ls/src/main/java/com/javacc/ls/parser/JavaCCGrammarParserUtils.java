@@ -7,7 +7,6 @@ import java.net.URLDecoder;
 import org.eclipse.lsp4j.jsonrpc.CancelChecker;
 
 import com.javacc.Grammar;
-import com.javacc.JavaCCOptions;
 import com.javacc.parser.JavaCCParser;
 import com.javacc.parser.ParseException;
 import com.javacc.parser.tree.GrammarFile;
@@ -25,7 +24,7 @@ public class JavaCCGrammarParserUtils {
 		if (cancelChecker == null) {
 			cancelChecker = DEFAULT_CANCEL_CHECKER;
 		}
-		Grammar grammar = new Grammar(new JavaCCOptions((Grammar) null));
+		Grammar grammar = new Grammar();
 		try {
 			grammar.setFilename(URLDecoder.decode(fileName.replace("file:///", "").replace("file://", ""), "UTF-8"));
 		} catch (UnsupportedEncodingException e1) {

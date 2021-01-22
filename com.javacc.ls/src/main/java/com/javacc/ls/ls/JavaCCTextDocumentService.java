@@ -322,9 +322,9 @@ public class JavaCCTextDocumentService implements TextDocumentService {
 				grammar.createOutputDir();
 				grammar.semanticize();
 
-				if (!grammar.getOptions().getUserDefinedLexer() && grammar.getErrorCount() == 0) {
-					grammar.generateLexer();
-				}
+				if (!grammar.getUserDefinedLexer() && grammar.getErrorCount() == 0) {
+	                grammar.generateLexer();
+	            }
 
 				grammar.generateFiles();
 

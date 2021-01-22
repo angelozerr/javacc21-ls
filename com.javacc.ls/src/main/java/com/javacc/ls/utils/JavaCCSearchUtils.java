@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-import com.javacc.lexgen.RegularExpression;
+import com.javacc.parsegen.RegularExpression;
 import com.javacc.parser.Node;
 import com.javacc.parser.tree.BNFProduction;
 import com.javacc.parser.tree.CompilationUnit;
@@ -14,6 +14,7 @@ import com.javacc.parser.tree.RegexpRef;
 import com.javacc.parser.tree.RegexpSpec;
 import com.javacc.parser.tree.TokenProduction;
 import com.javacc.parser.tree.TypeDeclaration;
+
 
 public class JavaCCSearchUtils {
 
@@ -83,7 +84,7 @@ public class JavaCCSearchUtils {
 									// IDENTIFIER cannot be extracted by JavaCC, we create a fake Identifier class,
 									// but location is bad
 									Identifier id = new Identifier(null, label, expression.getInputSource());
-									id.setInputSource(expression.getFileLineMap());
+									id.setGrammar(identifier.getGrammar());
 									id.setBeginLine(reg.getBeginLine());
 									id.setBeginColumn(reg.getBeginColumn() + 1);
 									id.setEndLine(reg.getBeginLine());

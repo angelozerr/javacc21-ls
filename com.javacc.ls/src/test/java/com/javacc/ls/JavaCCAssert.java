@@ -11,7 +11,6 @@ import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 
 import com.javacc.Grammar;
-import com.javacc.JavaCCOptions;
 import com.javacc.ls.ls.commons.BadLocationException;
 import com.javacc.ls.ls.commons.TextDocument;
 import com.javacc.ls.services.JavaCCLanguageService;
@@ -59,7 +58,7 @@ public class JavaCCAssert {
 	}
 
 	public static GrammarFile parseGrammar(String fileName, String content) throws IOException, ParseException {
-		Grammar grammar = new Grammar(new JavaCCOptions((Grammar) null));
+		Grammar grammar = new Grammar();
 		grammar.setFilename(fileName);
 		JavaCCParser parser = new JavaCCParser(grammar, fileName, content);
 		return parser.Root();

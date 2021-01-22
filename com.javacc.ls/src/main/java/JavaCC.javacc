@@ -1,0 +1,2919 @@
+/* Copyright (c) 2008-2020 Jonathan Revusky, revusky@javacc.com
+ * Copyright (c) 2006, Sun Microsystems Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright notices,
+ *       this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer in the
+ *       documentation and/or other materials provided with the distribution.
+ *     * Neither the name Jonathan Revusky, Sun Microsystems, Inc.
+ *       nor the names of any contributors may be used to endorse or promote
+ *       products derived from this software without specific prior written
+ *       permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+ * THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+JAVA_UNICODE_ESCAPE;
+LEXER_USES_PARSER;
+TREE_BUILDING_ENABLED;
+FREEMARKER_NODES;
+SMART_NODE_CREATION;
+BASE_SRC_DIR="../java";
+PARSER_PACKAGE="com.javacc.parser";
+NODE_PACKAGE="com.javacc.parser.tree";
+DEFAULT_LEXICAL_STATE=JAVA;
+
+INJECT PARSER_CLASS :
+    import java.util.*;
+    import com.javacc.*;
+    import com.javacc.lexgen.*;
+    import com.javacc.parsegen.*;
+    import com.javacc.parser.tree.*;
+{
+    Grammar grammar;
+
+    public JavaCCParser(Grammar grammar, String inputSource, CharSequence content) {
+         this(inputSource, content);
+         this.grammar = grammar;
+    }
+
+   private char character_descriptor_assign(Token t, String s) {
+        if (s.length() != 1) {
+            grammar.addParseError(t,
+                    "String in character list may contain only one character.");
+            return ' ';
+        } else {
+            return s.charAt(0);
+        }
+    }
+
+    private char character_descriptor_assign(Token t, String s, String left) {
+        if (s.length() != 1) {
+            grammar.addParseError(t,
+                    "String in character list may contain only one character.");
+            return ' ';
+        } else if ((int) (left.charAt(0)) > (int) (s.charAt(0))) {
+            grammar
+                    .addParseError(
+                            t,
+                            "Right end of character range \'"
+                                    + s
+                                    + "\' has a lower ordinal value than the left end of character range \'"
+                                    + left + "\'.");
+            return left.charAt(0);
+        } else {
+            return s.charAt(0);
+        }
+    }
+
+
+
+    private String removeEscapesAndQuotes(Token t) {
+        String retval = "";
+        String str = t.getImage();
+        int index = 1;
+        char ch, ch1;
+        int ordinal;
+        while (index < str.length() - 1) {
+            if (str.charAt(index) != '\\') {
+                retval += str.charAt(index);
+                index++;
+                continue;
+            }
+            index++;
+            ch = str.charAt(index);
+            if (ch == 'b') {
+                retval += '\b';
+                index++;
+                continue;
+            }
+            if (ch == 't') {
+                retval += '\t';
+                index++;
+                continue;
+            }
+            if (ch == 'n') {
+                retval += '\n';
+                index++;
+                continue;
+            }
+            if (ch == 'f') {
+                retval += '\f';
+                index++;
+                continue;
+            }
+            if (ch == 'r') {
+                retval += '\r';
+                index++;
+                continue;
+            }
+            if (ch == '"') {
+                retval += '\"';
+                index++;
+                continue;
+            }
+            if (ch == '\'') {
+                retval += '\'';
+                index++;
+                continue;
+            }
+            if (ch == '\\') {
+                retval += '\\';
+                index++;
+                continue;
+            }
+            if (ch >= '0' && ch <= '7') {
+                ordinal = ((int) ch) - ((int) '0');
+                index++;
+                ch1 = str.charAt(index);
+                if (ch1 >= '0' && ch1 <= '7') {
+                    ordinal = ordinal * 8 + ((int) ch1) - ((int) '0');
+                    index++;
+                    ch1 = str.charAt(index);
+                    if (ch <= '3' && ch1 >= '0' && ch1 <= '7') {
+                        ordinal = ordinal * 8 + ((int) ch1) - ((int) '0');
+                        index++;
+                    }
+                }
+                retval += (char) ordinal;
+                continue;
+            }
+            if (ch == 'u') {
+                index++;
+                ch = str.charAt(index);
+                if (hexchar(ch)) {
+                    ordinal = hexval(ch);
+                    index++;
+                    ch = str.charAt(index);
+                    if (hexchar(ch)) {
+                        ordinal = ordinal * 16 + hexval(ch);
+                        index++;
+                        ch = str.charAt(index);
+                        if (hexchar(ch)) {
+                            ordinal = ordinal * 16 + hexval(ch);
+                            index++;
+                            ch = str.charAt(index);
+                            if (hexchar(ch)) {
+                                ordinal = ordinal * 16 + hexval(ch);
+                                index++;
+                                continue;
+                            }
+                        }
+                    }
+                }
+                grammar.addParseError(t, "Encountered non-hex character '" + ch
+                        + "' at position " + index + " of string "
+                        + "- Unicode escape must have 4 hex digits after it.");
+                return retval;
+            }
+            grammar.addParseError(t, "Illegal escape sequence '\\" + ch
+                    + "' at position " + index + " of string.");
+            return retval;
+        }
+        return retval;
+    }
+    
+    private static boolean hexchar(char ch) {
+    	return (ch >= '0' && ch <= '9') || (ch >= 'A' && ch <= 'F') || (ch >= 'a' && ch <= 'f');
+    }
+    
+    static private int hexval(char ch) {
+        if (ch >= '0' && ch <= '9')
+            return ((int) ch) - ((int) '0');
+        if (ch >= 'A' && ch <= 'F')
+            return ((int) ch) - ((int) 'A') + 10;
+        return ((int) ch) - ((int) 'a') + 10;
+    }    
+
+    static public CompilationUnit parseJavaFile(java.io.Reader input, String inputSource) throws ParseException {
+        JavaCCParser parser = new JavaCCParser(input);
+        parser.setInputSource(inputSource);
+        return parser.CompilationUnit();
+    }
+    
+    static public CompilationUnit parseJavaFile(String inputSource, CharSequence content) throws ParseException {
+        JavaCCParser parser = new JavaCCParser(inputSource, content);
+        return parser.CompilationUnit();
+    }
+
+    public Grammar getGrammar() {
+        return grammar;
+    }
+    
+    public void openNodeScopeHook(Node n) {
+        n.setGrammar(grammar);
+    }
+}
+
+/* JAVACC RESERVED WORDS: These are the only tokens in JavaCC but not in Java */
+
+TOKEN :
+{
+  < _INJECT: "INJECT" > #JavaCCKeyWord
+  |
+  < _INCLUDE : "INCLUDE" | "INCLUDE_GRAMMAR"> #JavaCCKeyWord
+  |
+  < _LOOKAHEAD: "LOOKAHEAD" > #JavaCCKeyWord
+  |
+  < _FAIL : "FAIL" > #JavaCCKeyWord
+  |
+  < _ENSURE : "ASSERT"> #JavaCCKeyWord
+  |
+  < _SCAN : "SCAN" > #JavaCCKeyWord
+  |
+  < _IGNORE_CASE: "IGNORE_CASE" > #JavaCCKeyWord
+  |
+  < _PARSER_BEGIN: "PARSER_BEGIN" > #JavaCCKeyWord
+  |
+  < _PARSER_END: "PARSER_END" > #JavaCCKeyWord
+  |
+  < _TOKEN: "TOKEN" | "REGULAR_TOKEN"> #JavaCCKeyWord
+  |
+  < _SPECIAL_TOKEN: "SPECIAL_TOKEN" | "UNPARSED"> #JavaCCKeyWord
+  |
+  < _MORE: "MORE" | "INCOMPLETE_TOKEN" > #JavaCCKeyWord
+  |
+  < _SKIP: "SKIP" > #JavaCCKeyWord
+  |
+  < _TOKEN_MGR_DECLS: "TOKEN_MGR_DECLS" > #JavaCCKeyWord
+  |
+  < _ATTEMPT: "ATTEMPT"> #JavaCCKeyWord
+  |
+  < _RECOVER : "RECOVER"> #JavaCCKeyWord
+  |
+  < _UPTO : "UPTO"> #JavaCCKeyWord
+  |
+  <HASH : "#">
+  |
+  <HASH_ID : "#"<IDENTIFIER>> #HashID
+  |
+  <BACKSLASH : "\\"> #Backslash
+  |
+  <RIGHT_ARROW : "=>"> #RightArrow
+  |
+  <UP_TO_HERE : "=>|" ("|" | ("+" ["0"-"9"]))> 
+  |
+  <_LEXICAL_STATE : "LEXICAL_STATE"> #JavaCCKeyWord
+//  |
+//  <UP_TO_HERE_PLUS : "=>|+"["0"-"9"]>
+}
+
+INJECT BaseNode :
+    import freemarker.template.*;
+    import java.lang.reflect.*;
+    import com.javacc.Grammar;
+    implements Node, TemplateHashModel;
+{
+    public TemplateModel get(String key) throws TemplateModelException {
+        String methodName = "get" + key.substring(0,1).toUpperCase() + key.substring(1);
+        TemplateModel result = invokeMethod(methodName);
+        if (result == null) {
+            result = invokeMethod(methodName.replace("get", "is"));
+        }
+        return result;
+   }
+    
+    private TemplateModel invokeMethod(String methodName) throws TemplateModelException {
+        Method method = null;
+        try {
+            method = this.getClass().getMethod(methodName);
+        } catch (NoSuchMethodException e) {
+            return null;
+        }
+        try {
+            Object result = method.invoke(this);
+            TemplateModel wrappedResult = Configuration.getCurrentObjectWrapper().wrap(result);
+            if (methodName.startsWith("is") && !(wrappedResult instanceof TemplateBooleanModel)) {
+                return null; //Maybe should throw an exception here, or maybe it doesn't matter.
+            }
+            return wrappedResult;
+        } catch (IllegalAccessException e) {
+            throw new TemplateModelException(e);
+        } catch (InvocationTargetException e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof TemplateModelException) {
+                throw (TemplateModelException) cause;
+            }
+            if (cause instanceof Exception) {
+                throw new TemplateModelException((Exception) cause);
+            }
+            throw (Error) cause;
+        }
+    } 
+    
+    private Grammar grammar;
+
+    public Grammar getGrammar() {
+        if (grammar == null) {
+            if (parent != null) {
+               grammar = parent.getGrammar();
+            }
+            if (grammar==null && !children.isEmpty()) {
+               grammar = children.get(0).getGrammar();
+            }
+        }
+        return grammar;
+    }
+
+    public void setGrammar(Grammar grammar) {
+         this.grammar = grammar;
+    }
+    
+    public String getSimpleName() {
+        String name = getClass().getName();
+        return name.substring(name.lastIndexOf(".") + 1); // strip the package name
+    }
+}
+
+INCLUDE("Java.javacc")
+
+INJECT PARSER_CLASS : {
+
+       
+   Set<String> javaccReservedWords = new HashSet<String>();
+   {
+       // A little kludge so that these keywords 
+       // can still be recognized as regular identifiers
+       // in Java code.
+
+        javaccReservedWords.add("INCLUDE");
+        javaccReservedWords.add("IGNORE_CASE");
+        javaccReservedWords.add("PARSER_BEGIN");
+        javaccReservedWords.add("TOKEN");
+        javaccReservedWords.add("REGULAR_TOKEN");
+        javaccReservedWords.add("SPECIAL_TOKEN");
+        javaccReservedWords.add("SPECIAL_TOKEN");
+        javaccReservedWords.add("UNPARSED_TOKEN");
+        javaccReservedWords.add("MORE");
+        javaccReservedWords.add("INCOMPLETE_TOKEN");
+        javaccReservedWords.add("SKIP");
+        javaccReservedWords.add("TOKEN_MGR_DECLS");
+        javaccReservedWords.add("ATTEMPT");
+        javaccReservedWords.add("RECOVER");
+        javaccReservedWords.add("SCAN");
+        javaccReservedWords.add("LOOKAHEAD");
+        javaccReservedWords.add("FAIL");
+        javaccReservedWords.add("LEXICAL_STATE");
+        javaccReservedWords.add("INJECT"); 
+        javaccReservedWords.add("PARSER_END");
+   }
+
+    private Token TOKEN_HOOK(Token tok) {
+        TokenType type = tok.getType();
+        if ((type == RSIGNEDSHIFT || type == RUNSIGNEDSHIFT) && !isInProduction("Expression")) {
+          Token gt = Token.split(tok, 1, GT, GT);
+          if (type == RUNSIGNEDSHIFT) {
+              Token next = Token.split(gt.getNext(), 1, GT, GT);
+              gt.setNext(next);
+          }
+          return gt;
+        } 
+        return tok;
+    }
+
+    private Token TOKEN_HOOK(Token t) {
+       if (javaccReservedWords.contains(t.getImage())) {
+            if (isInProduction("CompilationUnit", "ClassOrInterfaceBody", "BlockStatement", "TreeBuildingAnnotation")) {
+	           Token id = Token.newToken(IDENTIFIER, t.getImage(), this);
+	           Nodes.copyLocationInfo(t, id);
+	           return id;
+           }
+       }
+       return t;
+    }
+
+    private Token TOKEN_HOOK(Token tok) {
+        tok.setGrammar(getGrammar());
+        return tok;
+    }
+
+}
+
+INJECT CaseStatement :
+{
+    // If the case statement has an unreachable break statement at the
+    // end, we remove it. This allows us to get rid of this horrid longstanding kludge
+    // This is no longer used! I leave it here for historical reasons! 
+    // See: https://parsers.org/t/a-fun-example-of-code-injection-at-work/30
+    public void close() {
+        if (getChildCount() >= 2) {
+            Node last = this.getLastChild();
+            Node secondLast = this.getChild(getChildCount() -2);
+            if ((last instanceof BreakStatement) && (secondLast instanceof ReturnStatement)) {
+                removeChild(last);
+            }
+        }
+    }
+}
+
+INJECT Identifier : 
+{
+   public String getNormalizedText() {
+        String image = getImage();
+        if (image.equals("jjtThis") || image.equals("CURRENT_NODE")) { 
+            return getGrammar().getCurrentNodeVariableName();
+        }
+        if (image.equals("PARSER_CLASS")) {
+            return getGrammar().getParserClassName();
+        }
+        if (image.equals("LEXER_CLASS")) {
+            return getGrammar().getLexerClassName();
+        }
+        if (image.equals("CONSTANTS_CLASS")) {
+            return getGrammar().getConstantsClassName();
+        }
+        if (image.equals("NODE_PACKAGE")) {
+            return getGrammar().getNodePackage();
+        }
+        if (image.equals("PARSER_PACKAGE")) {
+            return getGrammar().getParserPackage();
+        }
+        if (image.equals("current_token")) {
+            return "currentToken";
+        }
+        if (image.equals("TOKEN_HOOK")) {
+            String result = "tokenHook$" + getInputSource() + "_line_" + getBeginLine();
+            return com.javacc.Grammar.removeNonJavaIdentifierPart(result);
+        }
+        if (image.equals("OPEN_NODE_SCOPE_HOOK")) {
+            String result = "openNodeScopeHook$" + getInputSource() + "_line" + getBeginLine();
+        }
+        if (image.equals("CLOSE_NODE_SCOPE_HOOK")) {
+            String result = "closeNodeScopeHook$" + getInputSource() + "_line" + getBeginLine();
+        }
+//        if (image.equals("input_stream")) {
+//            return "inputSource";
+//        }
+        return image;
+   }
+}
+
+INJECT interface Node :
+   import com.javacc.Grammar;
+{
+   Grammar getGrammar();
+   void setGrammar(Grammar grammar);
+}
+
+
+INJECT Token :
+    import com.javacc.Grammar;
+{
+    private Grammar grammar;
+
+    public Grammar getGrammar() {
+        if (grammar == null) {
+           if (parent != null) {
+              grammar = parent.getGrammar();
+           }
+        }
+        return grammar;
+    }
+
+    public void setGrammar(Grammar grammar) {
+         this.grammar = grammar;
+    }
+    
+    public String getNodeName() {
+        return getType().toString();
+    }
+    
+    public String getLeadingComments() {
+        if (specialToken == null)
+            return "";
+        StringBuilder buf = new StringBuilder();
+        Token tok = specialToken;
+        while (tok.specialToken != null) {
+            tok = tok.getSpecialToken();
+        }
+        while (tok != this && tok != null) {
+            buf.append(tok);
+            tok = tok.getNext();
+        }
+        return buf.toString();
+    }
+    
+    public String getNormalizedText() {
+        if (getType() == TokenType.IDENTIFIER) {
+            if (image.equals("jjtThis") || image.equals("CURRENT_NODE")) { 
+                return getGrammar().getCurrentNodeVariableName();
+            }
+        } 
+        return image;
+    }
+}
+
+
+INJECT GrammarFile : 
+   import java.util.Iterator;
+{
+    public String getDefaultLexicalState() {
+       Options options = firstChildOfType(Options.class);
+       if (options != null) {
+          Iterator<Node> it = options.children().iterator();
+          while (it.hasNext()) {
+              Node tok = it.next();
+              if ((tok instanceof Identifier) && tok.toString().equals("DEFAULT_LEXICAL_STATE")) {
+                  if (!it.hasNext()) break;
+                  if (!it.hasNext()) break;}
+                  String defaultState = it.next().toString();
+                  if (defaultState.charAt(0) == '\"') {
+                      defaultState = defaultState.substring(1, defaultState.length() -1);                     
+                  } 
+                  return defaultState;
+             }
+        }
+        return null; 
+    } 
+}
+
+GrammarFile Root throws IOException #GrammarFile :
+{
+    TokenManagerDecls decls;
+}
+{
+   [
+      OptionsBlock | Options
+   ]
+   {
+        if (!grammar.isInInclude()) {
+            grammar.getOptions().normalize();
+        }
+   }
+   [ParserCodeDecls]
+   (
+      TokenProduction  {grammar.addTokenProduction((TokenProduction) peekNode());}
+      |
+      BNFProduction
+      |
+      decls=TokenManagerDecls {grammar.addCodeInjection(decls);}
+      |
+      SCAN <_INJECT><COLON>
+      => CodeInjection2 
+      |
+      CodeInjection
+      |
+      GrammarInclusion
+  )+
+  <EOF>
+  {
+        return CURRENT_NODE;
+  }
+}
+
+ParserCodeDecls : 
+{
+    Token id;
+    CompilationUnit parserCode;
+}
+{
+   "PARSER_BEGIN"
+   "("
+   id=<IDENTIFIER>
+   ")"
+   {
+      if (!grammar.isInInclude())
+          grammar.setParserClassName(id.getImage());
+   }
+   parserCode=CompilationUnit
+   {
+       if (!grammar.isInInclude())
+           grammar.setParserCode(parserCode);
+   }
+   "PARSER_END" ["(" <IDENTIFIER> ")"]
+}
+
+INJECT ReturnType :
+    import java.util.List;
+{
+    public boolean getAsBoolean() {
+        List<Token> lt = Nodes.getRealTokens(this);
+        return lt.size() != 1 || lt.get(0).getType() != VOID;
+    }
+}
+
+INJECT PARSER_CLASS : {
+    private boolean enterIncludes = true;
+    public void setEnterIncludes(boolean enterIncludes) {this.enterIncludes = enterIncludes;}
+}
+
+GrammarInclusion throws IOException :
+{
+   Token t;
+}
+   <_INCLUDE>
+   (
+       t=<STRING_LITERAL>
+       |
+       "(" t=<STRING_LITERAL> ")"
+   )
+   {
+      String location = t.getImage().substring(1, t.getImage().length() -1);
+      if (enterIncludes) {
+          CURRENT_NODE.addChild(grammar.include(location));
+      }
+   }
+;
+
+CodeInjection :
+{
+        boolean isInterface = false;
+        Annotation annotation = null;
+        boolean foundOptionalInitialBrace = false;
+        boolean usingParentheses = false;
+}   
+        "INJECT" ["(" {usingParentheses = true;}]
+        [
+            "class"
+            |
+            "interface" {isInterface = true;}
+        ]
+        <IDENTIFIER> {CURRENT_NODE.name = current_token.toString();} 
+        [
+            SCAN {usingParentheses} => ")"
+        ]
+        ":"
+        [
+          SCAN "{"("import"|"@"|"extends"|"implements"|"}") => "{" 
+          {foundOptionalInitialBrace=true;}
+        ]
+         (
+            ImportDeclaration {CURRENT_NODE.importDeclarations.add((ImportDeclaration) peekNode());}
+         )*
+         (
+             annotation = Annotation {CURRENT_NODE.annotations.add(annotation);}
+         )*
+         [
+            CURRENT_NODE.extendsList=ExtendsList(isInterface)
+            [";"]
+         ]
+         [CURRENT_NODE.implementsList=ImplementsList(isInterface) [";"]]
+        [
+           SCAN {foundOptionalInitialBrace} => "}"
+        ]
+        [CURRENT_NODE.body=ClassOrInterfaceBody(isInterface)]
+        {
+                if (enterIncludes) {
+                    grammar.addCodeInjection(CURRENT_NODE);
+                }
+        }
+;
+
+INJECT CodeInjection : 
+   import java.util.List;
+   import java.util.ArrayList;
+{
+   public String name;
+   public List<ImportDeclaration> importDeclarations = new ArrayList<ImportDeclaration>();
+   public List<Annotation> annotations = new ArrayList<>();
+   public ExtendsList extendsList;
+   public ImplementsList implementsList;
+   public ClassOrInterfaceBody body;
+   public boolean isInterface;   
+}
+
+CodeInjection2 :
+{
+        CompilationUnit jcu;
+}
+        <_INJECT>
+        ":" "{"
+        jcu=CompilationUnit
+       "}"
+        {
+                if (enterIncludes) {
+    				grammar.addCodeInjection(jcu);
+                }
+        }
+;
+
+Options #Options : 
+    Setting =>||
+    (=> Setting)*
+;
+
+OptionsBlock #Options :
+    <IDENTIFIER> 
+    [
+        SCAN {!getToken(0).getImage().equalsIgnoreCase("options")}#
+        => FAIL "Expecting \"options\" here"
+    ]
+    =>||
+    [":"]
+    "{" 
+    ( Setting )* "}"
+;
+
+Setting #void :
+{
+	  String option_name;
+	  Token name, t=null;
+	  JavaCCOptions _options = grammar.getOptions();
+	  boolean inInclude = grammar.isInInclude();
+	  Object value = Boolean.TRUE;
+}
+  ( 
+     name = <IDENTIFIER> 
+     | 
+     name = <_LOOKAHEAD>
+     |
+     name = "IGNORE_CASE"
+  )
+  {
+	  option_name = name.getImage();
+  }
+  [
+     "="
+     (
+        t="true" {value=true;}
+        |
+        t="false" {value=false;}
+        |
+        t= <INTEGER_LITERAL> {value = Integer.valueOf(t.getImage());}
+        |
+        t= <STRING_LITERAL> {value = removeEscapesAndQuotes(t);}
+        |
+        t= <IDENTIFIER> {value = t.getImage();}
+     )
+  ]  
+  ";"
+  {_options.setInputFileOption(name, t, option_name, value, inInclude);}
+;
+
+BNFProduction BNFProduction :
+{
+    TreeBuildingAnnotation tba = null;
+    Token t=getToken(1);
+}
+    [
+        "public" | "private" | "protected"
+    ]
+    [
+       SCAN ReturnType <IDENTIFIER> => ReturnType
+    ]
+    <IDENTIFIER> {CURRENT_NODE.setName(current_token.getImage());}
+    [FormalParameters]
+    [
+      ThrowsList
+    ]
+    [
+        tba=TreeNodeDescriptor 
+        {
+            String nodeName = tba.getNodeName();
+            if (nodeName == null) {
+               nodeName = CURRENT_NODE.getName();
+            }
+            grammar.addNodeType(nodeName);
+        }
+    ]
+    ":"
+    (
+        => [=>Block] "{" ExpansionChoice {CURRENT_NODE.setExpansion((Expansion) peekNode());} "}"
+        |
+        ExpansionChoice {CURRENT_NODE.setExpansion((Expansion) peekNode());} ";"
+    )
+    {
+        CURRENT_NODE.adjustFirstToken(t);
+        if (tba == null && !grammar.getOptions().getNodeDefaultVoid()) {
+           grammar.addNodeType(CURRENT_NODE.getName());
+        }
+        return CURRENT_NODE;
+     }
+;
+
+
+INJECT BNFProduction : 
+	import java.util.*;
+	import com.javacc.lexgen.TokenSet;
+	import com.javacc.parsegen.Expansion;
+{
+
+    // A bit of a kludge. We treat the very first code block in a production specially.
+    public void close() {
+        if (getJavaCode() == null && expansion instanceof ExpansionSequence) {
+            List<Expansion> children = ((ExpansionSequence) expansion).getUnits();
+            if (children.size() > 1) {
+            Expansion first = children.get(0);
+            if (first instanceof CodeBlock) {
+            // If the first child is a code block, we remove it from the seequence
+            // and insert it as a child node of the production itself.
+                    expansion.removeChild(first);
+                    for (int i = 0; i < getChildCount(); i++) {
+                        Node child = getChild(i);
+                        if (child instanceof Token && ((Token)child).getType() == COLON) {
+                            addChild(i+1, first);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    public boolean getHasScanLimit() {
+        return expansion instanceof ExpansionSequence && ((ExpansionSequence) expansion).getHasScanLimit();
+    }
+
+    public boolean getHasExplicitLookahead() {
+        return expansion.getHasExplicitLookahead();
+    }
+
+    public CodeBlock getJavaCode() {
+       return firstChildOfType(CodeBlock.class);
+    }
+    
+    public TreeBuildingAnnotation getTreeBuildingAnnotation() {
+        return firstChildOfType(TreeBuildingAnnotation.class);
+    }
+    
+    public String getNodeName() {
+        TreeBuildingAnnotation tba = getTreeBuildingAnnotation();
+        if (tba != null) {
+             String nodeName = tba.getNodeName();
+             if (nodeName == null) {
+                return nodeName;
+             }
+        }
+        return this.getName();
+    }
+
+    private String leadingComments;
+
+    private Expansion expansion;
+
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getName() {
+        return name;
+    }
+    
+    public ThrowsList getThrowsList() {
+        return firstChildOfType(ThrowsList.class);
+    }
+    
+    public FormalParams getParameterList() {
+        return firstChildOfType(FormalParams.class);
+    }
+    
+    public TreeBuildingAnnotation getTreeNodeBehavior() {
+        return firstChildOfType(TreeBuildingAnnotation.class);
+    }
+
+
+    /**
+     * The NonTerminal nodes which refer to this production.
+     */
+    private List<NonTerminal> referringNonTerminals;
+    
+    public List<NonTerminal> getReferringNonTerminals() {
+        if (referringNonTerminals == null) {
+           referringNonTerminals = getGrammar().descendants(NonTerminal.class, nt->nt.getName().equals(name));
+        }
+        return referringNonTerminals;
+    }
+
+    /**
+     * The name of the non-terminal of this production.
+     */
+    private String name;
+
+    public String getLookaheadMethodName() {
+        return "check$" + name;
+    }
+    
+    public Expansion getExpansion() {
+        return expansion;
+    }
+    
+    public void setExpansion(Expansion expansion) {
+        this.expansion = expansion;
+    }
+
+    /**
+     * Can this production be matched by an empty string?
+     */
+    public boolean isPossiblyEmpty() {
+         return getExpansion().isPossiblyEmpty();
+    }
+
+    public String getAccessModifier() {
+        for (Token t : childrenOfType(Token.class)) {
+           TokenType type = t.getType();
+           if (type == PRIVATE) {
+               return "private";
+           }
+           else if (type == PROTECTED) {
+               return "protected";
+           }
+           else if (type == PUBLIC) {
+               return "public";
+           }
+        }
+        return "";
+    }
+
+    public ReturnType getReturnType() {
+        return firstChildOfType(ReturnType.class);
+    }
+    
+    public void adjustFirstToken(Token t) {
+        this.leadingComments = t.getLeadingComments();
+        t.setSpecialToken(null);
+    }
+
+    public String getLeadingComments() {
+        return leadingComments;
+    }
+    
+    private TokenSet firstSet, finalSet;
+    
+    public TokenSet getFirstSet() {
+        if (firstSet == null) {
+           firstSet = getExpansion().getFirstSet();
+        }
+        return firstSet;
+    }
+
+    public String getFirstSetVarName() {
+        return getName() + "_FIRST_SET";
+    }
+    
+    public TokenSet getFinalSet() {
+          if (finalSet == null) {
+              finalSet = getExpansion().getFinalSet();
+          }
+          return finalSet;
+    }
+    
+    public boolean isConcrete() {
+       return getExpansion().isConcrete();
+    }
+}
+
+TreeBuildingAnnotation TreeNodeDescriptor() #TreeBuildingAnnotation :
+  <HASH_ID>
+   [
+	   <LPAREN>  
+	      [
+	        ">"
+	      ]
+	      Expression()
+	   <RPAREN>
+  ]
+  {
+          return CURRENT_NODE;
+  }
+;
+
+INJECT TreeBuildingAnnotation :
+{
+    public String getNodeName() {
+        String image = null;
+        for (Node n : children) {
+	   if (n instanceof Token) {
+	       Token t = (Token) n;
+               if (t.getType() == HASH_ID) {
+                   image = t.getImage().substring(1);
+               }
+	   }
+        }
+        return image;
+    }
+
+    public Expression getCondition() {
+        return firstChildOfType(Expression.class);
+    }
+    
+    public boolean getGtNode() {
+        for (Node n : children) {
+	   if (n instanceof Token) {
+	      Token t = (Token) n;
+              if (t.getType() == GT) {
+                  return true;
+              }
+	   }
+        }
+        return false;
+    }
+    
+    public boolean getVoid() {
+        return "void".equals(getNodeName());
+    }
+}
+
+
+TokenProduction TokenProduction #TokenProduction :
+{
+    Token t = null;
+    String tokenClassName = null;
+    String firstSpecifiedLexicalState = null;
+    boolean multipleStatesSpecified = false, useBraces = false;
+}
+{
+  [
+    => "<" "*" ">" {multipleStatesSpecified = true;} 
+    |
+    "<"
+      <IDENTIFIER>{
+          firstSpecifiedLexicalState = current_token.getImage();
+          grammar.addLexicalState(firstSpecifiedLexicalState);
+      }
+      ("," <IDENTIFIER> {multipleStatesSpecified = true; grammar.addLexicalState(current_token.getImage());})*
+    ">"
+  ]
+  (<_TOKEN> | <_SPECIAL_TOKEN> | <_MORE> | "SKIP")
+  [
+    "[" "IGNORE_CASE" "]"
+        {
+          if (grammar.getOptions().getUserDefinedLexer()) {
+            grammar.addWarning(current_token, "Ignoring \"IGNORE_CASE\" specification since option USER_DEFINED_LEXER has been set to true.");
+          }
+        }
+  ]
+  [t = <HASH_ID> {tokenClassName=t.getImage().substring(1);}] 
+  ":"
+  ["{" {useBraces = true;}]
+   RegexpSpec(CURRENT_NODE, tokenClassName)
+   ( "|" RegexpSpec(CURRENT_NODE, tokenClassName) )*
+   (
+      SCAN {useBraces} => "}" 
+      | 
+      ";"
+   )
+   {
+      if (!multipleStatesSpecified) {
+          if (firstSpecifiedLexicalState == null) {
+              firstSpecifiedLexicalState = grammar.getDefaultLexicalState();
+          }
+          CURRENT_NODE.setLexicalState(firstSpecifiedLexicalState);
+      }
+      return CURRENT_NODE;
+   }
+}
+
+INJECT TokenProduction :
+    import java.util.*;
+{
+    /**
+     * This is true if this corresponds to a production that actually appears in
+     * the input grammar. Otherwise (if this is created to describe a regular
+     * expression that is part of the BNF) this is set to false.
+     */
+    private boolean explicit = true;
+
+    public boolean getIgnoreCase() {
+        for (Node n : children) {
+	      if (n instanceof Token) {
+	           Token t = (Token) n;
+               if (t.getType() == _IGNORE_CASE) {
+                   return true;
+               }
+	       }
+        }
+        return false;
+    }
+    
+    
+    private String lexicalState;
+    
+    public void setLexicalState(String lexicalState) {
+        this.lexicalState = lexicalState;
+    }
+
+    public List<RegexpSpec> getRegexpSpecs() {
+        return childrenOfType(RegexpSpec.class);
+    }
+
+    /**
+     * The states in which this regular expression production exists.
+     */
+    public String[] getLexStates() {
+    
+        if (lexicalState != null) {
+            return new String[] {lexicalState};
+        }        
+        if (!explicit) {
+            return new String[] {getGrammar().getDefaultLexicalState()};
+        }
+        if (isInAllLexStates()) {
+	    return getGrammar().getLexicalStates();
+        }
+        Set<String> states = new LinkedHashSet<String>();
+        for (Node n : children) {
+	   if (n instanceof Token) {
+	       Token t = (Token) n;
+               if (t.getType() == IDENTIFIER) {
+                  states.add(n.toString());
+               }
+	   }
+        }
+        if (states.isEmpty()) {
+           return new String[] {getGrammar().getDefaultLexicalState()};
+        }
+        String[] lexStates = new String[states.size()];
+        int i=0;
+        for (String s : states) {
+           lexStates[i++] = s;
+        } 
+        return lexStates;
+    }
+    
+    private boolean isInAllLexStates() {
+       for (Node n : children) {
+          if (n instanceof Token) {
+	      Token t = (Token) n;
+              if (t.getType() == STAR) {
+                  return true;
+              }
+	      }
+       }
+       return false;
+    }
+
+
+
+    public void setExplicit(boolean explicit) {
+        this.explicit = explicit;
+    }
+
+    public boolean isExplicit() {
+        return explicit;
+    }
+
+    public boolean getExplicit() {
+        return explicit;
+    }
+
+    public String getKind() {
+       for (Token t : childrenOfType(Token.class)) {
+	       switch (t.getType()) {
+	          case _MORE : return "MORE";
+	          case _SPECIAL_TOKEN : return "SPECIAL_TOKEN";
+	          case _SKIP : return "SKIP";
+	          case _TOKEN : return "TOKEN";
+	          default: 
+	       }
+      }
+      return "TOKEN";
+    }
+}
+
+TokenManagerDecls TokenManagerDecls :
+   "TOKEN_MGR_DECLS" ":"
+    ClassOrInterfaceBody(false)
+    {
+        return CURRENT_NODE;
+    }
+;
+
+RegexpSpec(TokenProduction p, String tokenClassName) #RegexpSpec :
+{
+    RegularExpression regexp;
+}
+  RegexpExpansion 
+  {
+      regexp = (RegularExpression) peekNode();
+      CURRENT_NODE.addChild(popNode());
+      regexp.tpContext = p;
+      if (tokenClassName != null) {
+          regexp.setGeneratedClassName(tokenClassName);
+      }
+  }
+  [
+     <HASH_ID>
+     {
+        regexp.setGeneratedSuperClassName(tokenClassName);
+        regexp.setGeneratedClassName(current_token.getImage().substring(1));
+     }
+  ]
+  [
+      Block
+        {
+            if (grammar.getOptions().getUserDefinedLexer()) {
+                grammar.addWarning(peekNode(), "Ignoring code snippet for regular expression specification since option USER_DEFINED_LEXER has been set to true.");
+            }
+            if (regexp.isPrivate()) {
+                grammar.addParseError(peekNode(), "Code snippets are not permitted on private (#) regular expressions.");
+            }
+        }
+  ]
+  [ ":" <IDENTIFIER>
+        {
+          if (regexp.isPrivate()) {
+            grammar.addParseError(current_token, "Lexical state changes are not permitted after private (#) regular expressions.");
+          }
+        }
+  ]
+;
+
+INJECT RegexpSpec : 
+   import com.javacc.lexgen.RegularExpression;
+{
+    public String getNextState() {
+        Token nsTok = getNsTok();
+        return nsTok == null ? null : nsTok.toString();
+    }
+
+    public Identifier getNsTok() {
+       return firstChildOfType(Identifier.class);
+    }
+
+    public RegularExpression getRegexp() {
+         return firstChildOfType(RegularExpression.class);
+    }
+
+    public CodeBlock getCodeSnippet() {
+        return firstChildOfType(CodeBlock.class);
+    }
+}
+
+ExpansionChoice : 
+  ExpansionSequence
+  ( "|" ExpansionSequence)*
+;
+
+INJECT ExpansionChoice : 
+   import com.javacc.parsegen.Expansion;
+   import com.javacc.lexgen.TokenSet;
+   import java.util.List;
+   extends Expansion implements Expansion.ChoicePoint;
+{
+   public List<Expansion> getChoices() {
+       return childrenOfType(Expansion.class);
+   }
+   
+   public TokenSet getFirstSet() {
+        if (firstSet == null) {
+           firstSet = new TokenSet(getGrammar());
+           for (Expansion choice : getChoices()) {
+//               firstSet.or(choice.getFirstSet());
+               firstSet.or(choice.getLookaheadExpansion().getFirstSet());
+           }
+        }
+        return firstSet;
+   }
+   
+   private TokenSet finalSet;
+    
+   public TokenSet getFinalSet() {
+       if (finalSet == null) {
+           finalSet = new TokenSet(getGrammar());
+           for (Expansion choice : getChoices()) {
+               finalSet.or(choice.getFinalSet());
+           }
+       }
+       return finalSet;
+   }
+   
+   
+   public boolean isPossiblyEmpty() {
+        for (Expansion e : getChoices()) {
+            if (e.isPossiblyEmpty()) {
+                return true;
+            }
+        }
+        return false;
+   }
+   
+   public int minimumSize(int min) {
+      for (Expansion nestedExpansion : getChoices()) {
+       	if (min<=0 || nestedExpansion instanceof Failure) break;
+        	min = Math.min(min, nestedExpansion.minimumSize(min));
+        }
+        return min;
+   }
+
+   public int getMaximumSize() {
+       int result = 0;
+       for (Expansion exp : getChoices()) {
+           result = Math.max(result, exp.getMaximumSize());
+           if (result == Integer.MAX_VALUE) break;
+       }
+       return result;
+   }
+   
+   public boolean isConcrete() {return false;} 
+
+   public boolean isAlwaysSuccessful() {
+       if (!super.isAlwaysSuccessful()) return false;
+       for (Expansion choice : getChoices()) {
+           if (choice.isAlwaysSuccessful()) return true;
+       }
+       return false;
+   }
+}
+
+ExpansionSequence #ExpansionSequence :
+{
+   Expansion sub;
+   Lookahead la = null;
+}
+{
+  [ 
+    SCAN ~\...\Lookahead 
+    =>
+    la=Lookahead
+    {
+       la.setExpansion(CURRENT_NODE);
+       CURRENT_NODE.setLookahead(la);
+     }
+  ]
+  (
+     SCAN ~(<BIT_OR>|<COMMA>|<RPAREN>|<RBRACE>|<RBRACKET>|<SEMICOLON>|<RIGHT_ARROW>|<SLASH>|<BACKSLASH>)
+     => sub=ExpansionUnit
+      {
+          pokeNode(sub);
+      }
+  )+
+}
+
+INJECT ExpansionSequence : 
+   import com.javacc.Grammar;
+   import com.javacc.parsegen.Expansion;
+   import com.javacc.lexgen.TokenSet;
+   import java.util.*;
+   extends Expansion;
+{
+   public ExpansionSequence(Grammar grammar) {
+       setGrammar(grammar);
+   }
+
+   public ExpansionSequence() {}
+
+
+   public List<Expansion> getUnits() {
+       return childrenOfType(Expansion.class);
+   }
+
+   public boolean isAlwaysSuccessful() {
+       if (!super.isAlwaysSuccessful()) return false;
+       for (Expansion unit : getUnits()) {
+           if (!unit.isAlwaysSuccessful()) return false;
+       }
+       return true;
+   }
+
+   public TokenSet getFirstSet() {
+       if (firstSet == null) {
+           firstSet = new TokenSet(getGrammar());
+           for (Expansion child : getUnits()) {
+               firstSet.or(child.getFirstSet());
+               if (!child.isPossiblyEmpty()) {
+                  break;
+               }
+           }
+       }
+       return firstSet;
+   }
+//   private TokenSet finalSet;
+   public TokenSet getFinalSet() {
+       TokenSet finalSet = null; // REVISIT, not sure why this is necessary
+       if (finalSet == null) {
+           finalSet = new TokenSet(getGrammar());
+           List<Expansion> children = getUnits();
+           Collections.reverse(children);
+           for (Expansion child : children) {
+               finalSet.or(child.getFinalSet());
+               if (!child.isPossiblyEmpty()) {
+                  break;
+               }
+           }
+       }
+       return finalSet;
+   }
+
+   public boolean getRequiresScanAhead() {
+       boolean foundNonEmpty = false;
+       for (Expansion unit : getUnits()) {
+            if (unit.isScanLimit()) return true;
+            if (!foundNonEmpty && (unit instanceof NonTerminal)) {
+                NonTerminal nt = (NonTerminal) unit;
+                if (nt.getHasScanLimit()) return true;
+            }
+            if (!unit.isPossiblyEmpty()) foundNonEmpty = true;
+       }
+       Lookahead la = getLookahead();
+       return la != null && la.getRequiresScanAhead();
+   }
+
+   public boolean isPossiblyEmpty() {
+        for (Expansion e : getUnits()) {
+            if (!e.isPossiblyEmpty()) {
+                return false;
+            }
+        }
+        return true;
+   }
+
+    public int minimumSize(int oldMin) {
+          int min = 0;
+          for (Expansion eseq : getUnits()) {
+              int mineseq = eseq.getMinimumSize();
+              if (min == Integer.MAX_VALUE || mineseq == Integer.MAX_VALUE) {
+                  min = Integer.MAX_VALUE; // Adding infinity to something results in infinity.
+              } else {
+                  min += mineseq;
+                  if (min > oldMin)
+                      break;
+              }
+          }
+          return min;
+   }
+
+    public int getMaximumSize() {
+       int result = 0;
+       for (Expansion exp : getUnits()) {
+           int max = exp.getMaximumSize();
+           if (max == Integer.MAX_VALUE) return Integer.MAX_VALUE;
+           result += max;
+       }
+       return result;
+   }
+   
+   public boolean isConcrete() {
+      for (Expansion exp : getUnits()) {
+         if (!exp.isConcrete()) {
+            return false;
+         }
+      }
+      return true;
+   }
+   
+   public boolean isSingleton() {
+       return getUnits().size() == 1 && getLookahead() == null;
+   }
+  /* 
+  // need to REVISIT this.
+   public String getFirstSetVarName() {
+       if (isSingleton()) {
+          NonTerminal nt = firstChildOfType(NonTerminal.class);
+          if (nt != null) {
+              return nt.getFirstSetVarName();
+          }
+       }
+       return super.getFirstSetVarName();
+   }*/
+   
+}
+
+Lookahead Lookahead #void :
+(<RIGHT_ARROW>#Lookahead | ScanAhead | LegacyLookahead) 
+{
+    return (Lookahead) peekNode();
+};
+
+INJECT Assertion : 
+   import com.javacc.parsegen.Expansion;
+   import com.javacc.lexgen.TokenSet;
+   extends Expansion 
+{
+    private Expression semanticLookahead;
+    private LookBehind lookBehind;
+    private Expansion expansion;
+    private boolean semanticLookaheadNested, expansionNegated;
+    private String message = "Assertion failed";
+
+    public Expansion getExpansion() {return expansion;}
+    public LookBehind getLookBehind() {return lookBehind;}
+    public Expression getSemanticLookahead() {return semanticLookahead;}
+    public boolean getSemanticLookaheadNested() {return semanticLookaheadNested;}
+    public boolean getExpansionNegated() {return expansionNegated;}
+    public String getMessage() {return message;}
+    public void setSemanticLookahead(Expression semanticLookahead) {this.semanticLookahead = semanticLookahead;}
+    public void setLookBehind(LookBehind lookBehind) {this.lookBehind = lookBehind;}
+    public void setExpansion(Expansion expansion) {this.expansion = expansion;}
+    public void setExpansionNegated(boolean expansionNegated) {this.expansionNegated = expansionNegated;}
+    public void setSemanticLookaheadNested(boolean semanticLookaheadNested) {this.semanticLookaheadNested = semanticLookaheadNested;}
+    public void setMessage(String message) {this.message = message;}
+
+    public boolean getRequiresScanAhead() {
+        return false;
+    }
+    
+    public boolean isPossiblyEmpty() {
+        return true;
+    }
+    
+    public TokenSet getFirstSet() {return new TokenSet(getGrammar());}
+    
+    public TokenSet getFinalSet() {return new TokenSet(getGrammar());}
+     
+     public int minimumSize(int unused) {
+         return 0;
+     }
+
+     public int getMaximumSize() {
+         return 0;
+     }
+
+    public boolean isConcrete() {return false;}
+}
+
+
+Assertion Assertion :
+   {
+       Expression exp = null;
+       LookBehind lb = null;
+       Expansion expansion = null;
+       Token messageToken;
+   }
+   "ASSERT"
+   [
+    "{" 
+    exp=Expression {CURRENT_NODE.setSemanticLookahead(exp);}
+    "}"
+    ["#" {CURRENT_NODE.setSemanticLookaheadNested(true);}]
+   ]  
+   [=>LookBehind {lb = (LookBehind) peekNode(); CURRENT_NODE.setLookBehind(lb);}]
+   [
+       ["~" {CURRENT_NODE.setExpansionNegated(true);}] 
+       ExpansionChoice {expansion = (Expansion) peekNode(); CURRENT_NODE.setExpansion(expansion);}
+   ]
+   [
+       SCAN {exp == null && lb == null && expansion == null}
+       => FAIL "Assertion is empty!"
+   ]
+   ":" 
+   messageToken=<STRING_LITERAL> {CURRENT_NODE.setMessage(removeEscapesAndQuotes(messageToken));}
+   {
+       return CURRENT_NODE;
+   }
+;
+
+Lookahead ScanAhead #Lookahead : 
+{
+   Token amountToken=null;
+   boolean hasSemanticLookahead = false;
+   Expansion expansion = null, upToExpansion = null;
+   Expression exp=null;
+   Node lb = null;
+}
+[=>exp=PrimaryExpression "=" {CURRENT_NODE.setLHS(exp);}]
+<_SCAN>
+[
+    amountToken= <INTEGER_LITERAL>
+    {
+        CURRENT_NODE.setAmount(Integer.parseInt(amountToken.getImage()));
+    }
+]
+[
+    "{" 
+    exp=Expression {hasSemanticLookahead = true; CURRENT_NODE.setSemanticLookahead(exp);}
+    "}"
+    ["#" {CURRENT_NODE.setSemanticLookaheadNested(true);}]
+]
+/*
+[
+   <_UPTO> 
+   ExpansionChoice 
+   {
+       upToExpansion = (Expansion) peekNode();
+       CURRENT_NODE.setUpToExpansion(upToExpansion);
+   }
+]*/
+[SCAN LookBehind {lb = peekNode();}]
+[
+    SCAN {amountToken == null} => 
+    ["~" {CURRENT_NODE.setNegated(true);}] 
+    ExpansionChoice {expansion = (Expansion) peekNode();}
+    <RIGHT_ARROW>
+    {
+       CURRENT_NODE.setNestedExpansion(expansion);
+       expansion.setLookahead(CURRENT_NODE);
+    }
+]
+(
+    SCAN {expansion == null} => <RIGHT_ARROW>
+    |
+    SCAN {expansion != null || (exp ==null && lb == null && upToExpansion == null)} => {}
+)
+{
+    return CURRENT_NODE;
+};
+
+LookBehind : 
+   [<TILDE> {CURRENT_NODE.setNegated(true);}] 
+   (LookBehindForward | LookBehindBackward)
+;
+
+LookBehindForward #void :
+   (
+       <SLASH>
+       (
+         ([<TILDE>]<IDENTIFIER>)
+         |
+         (<DOT>|<VAR_ARGS>)
+       )
+   )+
+   [<BACKSLASH>]
+;
+
+LookBehindBackward #void :
+   (
+       <BACKSLASH>
+       (
+          ([<TILDE>]<IDENTIFIER>)
+          |
+          (<DOT>|<VAR_ARGS>)
+       )
+   )+
+   [<SLASH>]
+;
+
+INJECT LookBehind :
+import java.util.*;
+{
+    private boolean negated;
+
+    public boolean isNegated() {
+        return negated;
+    }
+
+    public void setNegated(boolean negated) {
+        this.negated = negated;
+    }
+
+    public boolean isBackward() {
+        return getChild(0) instanceof Backslash || getChild(1) instanceof Backslash;
+    }
+
+    public boolean getHasFinalEllipsis() {
+        Token t = (Token) getChild(getChildCount() -1);
+        return t.getImage().equals("...");
+    }
+
+    public List<String> getPath() {
+        ArrayList<String> result = new ArrayList<>();
+        boolean negated = false;
+        for (Token t : childrenOfType(Token.class)) {
+            String img = t.getImage();
+            if (img.charAt(0) == '\\' || img.charAt(0)=='/') continue;
+            if (img.equals("~")) {
+                negated = true;
+                continue;
+            }
+            if (negated) {
+                result.add("~" + img);
+            } else {
+               result.add(img);
+            }
+            negated = false;
+        }
+        if (result.get(0).equals("~")) {
+            result.remove(0);
+        }
+        return result;
+    }
+
+    public boolean getHasEndingSlash() {
+        Token lastToken = (Token) getChild(getChildCount()-1);
+        String img = lastToken.getImage();
+        return img.equals("\\") || img.equals("/");
+    }
+
+    private String routineName;
+    
+    public String getRoutineName() {
+        if (routineName == null) {
+            routineName = getGrammar().generateUniqueIdentifier("backscan$", this);
+        }
+        return routineName;
+    }
+
+}
+
+Lookahead LegacyLookahead #Lookahead :
+{
+    Expansion expansion = null;
+    Expression exp = null;
+    boolean empty = true, commaAtEnd = false;
+    Token t= null;
+}
+{
+  <_LOOKAHEAD>
+  [
+   "(" 
+      [
+        t=<INTEGER_LITERAL>
+        {
+           CURRENT_NODE.setAmount(Integer.parseInt(t.getImage()));
+           empty = false;
+        }
+      ]
+      [ 
+        SCAN {!empty} ~<RPAREN> 
+        => "," {commaAtEnd = true;}
+      ]
+      [ 
+        SCAN {empty} ~<RPAREN>|<LBRACE> 
+        =>
+        ["~" {CURRENT_NODE.setNegated(true);}] 
+        ExpansionChoice
+        {
+           expansion = (Expansion) peekNode();
+           empty = false; commaAtEnd = false;
+           CURRENT_NODE.setNestedExpansion(expansion);
+           expansion.setLookahead(CURRENT_NODE);
+        }
+      ]
+      [ 
+        SCAN {!empty && !commaAtEnd} ~")" => ","
+      ]
+      [
+        "{"  exp=Expression  "}" {CURRENT_NODE.setSemanticLookahead(exp);}
+        ["#" {CURRENT_NODE.setSemanticLookaheadNested(true);}]
+      ]
+     ")"
+  ]
+  {
+     if (t == null && expansion == null && exp != null) {
+         // Legacy semantics
+         CURRENT_NODE.setAmount(0);
+     }
+     return CURRENT_NODE;
+  }
+}
+
+INJECT Lookahead :
+   import com.javacc.parsegen.Expansion;
+   import com.javacc.lexgen.TokenSet;
+   import com.javacc.lexgen.RegularExpression;
+{
+    private int amount=Integer.MAX_VALUE;
+
+    private boolean explicitNumerical;
+    
+    private boolean negated;
+
+    private Expansion expansion, nestedExpansion, upToExpansion;
+
+    private boolean nestedSemanticLookahead;
+
+    Expression lhs, semanticLookahead;
+
+    public final boolean isNegated() {
+        return negated;
+    }
+    
+    public void setNegated(boolean negated) {
+        this.negated = negated;
+    }
+
+    public boolean getHasExplicitNumericalAmount() {
+        return explicitNumerical;
+    }
+    
+    public boolean isAlwaysSuccessful() {
+        return !hasSemanticLookahead() && (getAmount() == 0 || getLookaheadExpansion().isPossiblyEmpty()); 
+    }
+
+    public boolean getRequiresScanAhead() {
+        return !getLookaheadExpansion().isPossiblyEmpty() || isSemanticLookaheadNested();
+//        return !getLookaheadExpansion().isPossiblyEmpty() && getAmount() > 1;
+//          return !isAlwaysSuccessful() && getAmount() >1;
+    }
+
+    public Expression getSemanticLookahead() {
+        return semanticLookahead;
+    }
+
+    public void setSemanticLookahead(Expression semanticLookahead) {
+        this.semanticLookahead = semanticLookahead;
+    }
+
+    public boolean isSemanticLookaheadNested() {
+        return nestedSemanticLookahead;
+    }
+
+    public void setSemanticLookaheadNested(boolean nestedSemanticLookahead) {
+        this.nestedSemanticLookahead = nestedSemanticLookahead;
+    }
+    
+    public boolean hasSemanticLookahead() {
+        return getSemanticLookahead() != null;
+    }
+    
+    public Expansion getLookaheadExpansion() {
+        Expansion result = getNestedExpansion();
+        if (result != null) {
+            return result;
+        }
+        return expansion;
+    }
+
+    public Expansion getNestedExpansion() {
+        return nestedExpansion;
+    }
+
+    public void setNestedExpansion(Expansion nestedExpansion) {
+        this.nestedExpansion = nestedExpansion;
+    }
+
+    public Expansion getExpansion() {
+        return expansion;
+    }
+    
+    public void setExpansion(Expansion exp){
+        this.expansion = exp;
+    }
+
+    public Expression getLHS() {
+        return lhs;
+    }
+
+    public void setLHS(Expression lhs) {
+        this.lhs = lhs;
+    }
+
+    public int getAmount() {
+//        if (isSingleToken()) {
+//            amount = 1;
+//        }
+        return amount;
+    }
+
+    public void setAmount(int amount) {
+        this.amount = amount;
+        this.explicitNumerical = true;
+    }
+
+    public boolean getHasExplicitAmount() {
+        return amount != Integer.MAX_VALUE;
+    }
+
+    public TokenSet getFirstSet() {
+        TokenSet result = new TokenSet(getGrammar());
+        Expansion nestedExp = getNestedExpansion();
+        if (nestedExp != null) {
+            result.and(nestedExp.getFirstSet());
+        }
+        if (isNegated()) {
+            result.not();
+        }
+        result.and(getExpansion().getFirstSet());
+        return result;
+    }
+    
+    private String firstSetVarName;
+
+    public String getFirstSetVarName() {
+        if (firstSetVarName == null) {
+            firstSetVarName = getGrammar().generateUniqueIdentifier("first_set$", this);
+        }
+        return firstSetVarName;
+    }
+
+    public boolean isSingleToken() {
+        return expansion.isSingleToken() && (getNestedExpansion() == null || getNestedExpansion().isSingleToken());
+    }
+
+    public LookBehind getLookBehind() {
+        return firstChildOfType(LookBehind.class);
+    }
+              
+    public Expansion getUpToExpansion() {
+        return upToExpansion;
+    }
+
+    public void setUpToExpansion(Expansion upToExpansion) {
+        this.upToExpansion = upToExpansion;
+    }
+
+}
+
+Expansion ExpansionUnit :
+{
+    Expression lhs=null;
+    Token t=current_token;
+    Expansion result=null;
+    TreeBuildingAnnotation tba = null;
+}
+ (
+  SCAN ~\...\Lookahead => 
+  result = Failure
+  |
+  SCAN ~\...\Lookahead =>
+  result=Block ["#" {((CodeBlock)result).setAppliesInLookahead(true);}]
+  |
+  SCAN 1 ~\...\Lookahead =>
+  result=AttemptBlock
+  |
+  SCAN 1 ~\...\Lookahead =>
+  result=TryBlock
+  |
+  SCAN 1 ~\...\Lookahead =>
+  result = Assertion
+  |
+  LexicalStateSwitch {result = (Expansion) peekNode();}
+  |
+  => result = ZeroOrOne [SCAN ~\...\Lookahead => UpToHere(result)]
+  |
+  => result = ZeroOrMore [SCAN ~\...\Lookahead => UpToHere(result)]
+  |
+  => result = OneOrMore [SCAN ~\...\Lookahead => UpToHere(result)]
+  |
+  SCAN [PrimaryExpression "="] (<STRING_LITERAL>|"<")
+  =>
+  [
+    SCAN ~\...\Lookahead PrimaryExpression "=" =>
+    lhs=PrimaryExpression
+    "="
+  ]
+  RegexpExpansion
+  {
+      RegularExpression re = (RegularExpression) peekNode();
+      result = re;
+      re.setLHS(lhs);
+      if (re instanceof RegexpStringLiteral) {
+      	grammar.addStringLiteralToResolve((RegexpStringLiteral) re);
+      }
+      if (!(re instanceof EndOfFile)) {
+            TokenProduction tokenProduction = new TokenProduction();
+            tokenProduction.setGrammar(grammar);
+            tokenProduction.setExplicit(false);
+            tokenProduction.setLexicalState(grammar.getDefaultLexicalState());
+            RegexpSpec res = new RegexpSpec();
+            res.addChild(re);
+            re.tpContext = tokenProduction;
+            tokenProduction.addChild(res);
+            grammar.addChild(tokenProduction);
+            grammar.addTokenProduction(tokenProduction);
+      }
+  }
+  [SCAN ~\...\Lookahead => UpToHere(result)]
+  |
+  SCAN [PrimaryExpression "="]<IDENTIFIER>
+  => result=NonTerminal [SCAN ~\...\Lookahead => UpToHere(result)]
+  |
+  "(" ExpansionChoice {result=(Expansion)peekNode();} ")" 
+  [SCAN ~\...\Lookahead => UpToHere(result)] 
+ )
+ [
+    tba=TreeNodeDescriptor
+ ]
+ {
+        result.setTreeNodeBehavior(tba);
+        return result;
+ }
+;
+
+NonTerminal NonTerminal #NonTerminal : 
+  [
+    => PrimaryExpression "="
+  ]
+  <IDENTIFIER>
+  [
+    SCAN "(" ExpansionSequence "|" => {}
+    |
+    SCAN "(" ExpansionChoice ")" ("*"|"+"|"?") => {}
+    |
+    Arguments
+  ]
+  {return CURRENT_NODE;}
+;
+
+UpToHere(Expansion exp) #void :
+   <UP_TO_HERE>
+   {
+       String img = currentToken.getImage();
+       exp.setScanLimit(true);
+       char lastChar = img.charAt(img.length() -1);
+       if (Character.isDigit(lastChar)) {
+           exp.setScanLimitPlus(lastChar - '0');
+       }
+   }
+;
+
+
+INJECT NonTerminal : 
+    import com.javacc.parsegen.*;
+    import com.javacc.lexgen.TokenSet;
+    extends Expansion; 
+{
+    /**
+     * The production this non-terminal corresponds to.
+     */
+    
+    public BNFProduction getProduction() {
+        return getGrammar().getProductionByName(getName());
+    }
+
+    public InvocationArgs getArgs() {
+        return firstChildOfType(InvocationArgs.class);
+    }
+
+    public Expression getLHS() {
+        return firstChildOfType(Expression.class);
+    }
+    
+    public String getName() {
+        for (Node n : children) {
+	    if (n instanceof Token) {
+	        Token t = (Token) n;
+                if (t.getType() == IDENTIFIER) {
+                    return n.toString();
+                }
+	    }
+        }
+        return null;
+    }
+    
+    /**
+     * The basic logic of when we ignore an up-to-here marker
+     */
+    public boolean getIgnoreUpToHere() {
+        if (isInsideLookahead()) return true;
+        ExpansionSequence parent = (ExpansionSequence) getParent();
+        if (parent.getHasExplicitNumericalLookahead() || parent.getHasScanLimit()) return true;
+        for (Expansion exp : parent.getUnits()) {
+            if (exp == this) return false;
+            if (exp.getMaximumSize() > 0) break;
+        }
+        return true;
+    }
+    
+    
+     public TokenSet getFirstSet() {
+        if (firstSet == null) {
+//            firstSet = new TokenSet(getGrammar());
+            firstSet = getProduction().getExpansion().getFirstSet();
+        }
+        return firstSet;
+     }
+     private int reEntries;     
+     public TokenSet getFinalSet() {
+          ++reEntries;
+          TokenSet result = reEntries == 1 ? getProduction().getExpansion().getFinalSet() : new TokenSet(getGrammar());
+          --reEntries;
+          return result;
+     }
+     
+     public boolean isPossiblyEmpty() {
+         BNFProduction prod = this.getProduction();
+         if (prod == null) {
+             return false; // We already handle this case elsewhere, but REVISIT later maybe
+         }
+         return prod.isPossiblyEmpty();
+     }
+     
+     // REVISIT. Why is this necessary?
+     private boolean inMinimumSize, inMaximumSize;
+     
+     public int minimumSize(int oldMin) {
+            if (inMinimumSize) {
+                return Integer.MAX_VALUE;
+            }
+            int retval = Integer.MAX_VALUE;
+            inMinimumSize = true;
+            BNFProduction prod = getProduction();
+            if (prod instanceof BNFProduction) {
+                retval = prod.getExpansion().getMinimumSize();
+            }
+            inMinimumSize = false;
+            return retval;
+     }
+
+     public int getMaximumSize() {
+         if (inMaximumSize) {
+             return Integer.MAX_VALUE;
+         }
+         inMaximumSize = true;
+         int result = getProduction().getExpansion().getMaximumSize(); 
+         inMaximumSize = false;
+         return result;
+     }
+     
+     public boolean isConcrete() {
+        return getProduction().isConcrete();
+     }
+
+     public boolean getHasScanLimit() {
+         return getProduction().getHasScanLimit();
+     }
+}
+
+ZeroOrMore ZeroOrMore : "(" ExpansionChoice ")" "*" {return CURRENT_NODE;};
+
+OneOrMore OneOrMore : "(" ExpansionChoice ")" "+" {return CURRENT_NODE;};
+
+ZeroOrOne ZeroOrOne : 
+{
+    (
+      "[" ExpansionChoice "]"
+      |
+      "(" ExpansionChoice ")" "?"
+    )
+    {
+       return CURRENT_NODE;
+    } 
+}
+
+
+INJECT ZeroOrOne : 
+     import com.javacc.parsegen.Expansion;
+     import com.javacc.lexgen.TokenSet;
+     extends Expansion implements Expansion.ChoicePoint;
+{
+    public Lookahead getLookahead() {
+        return getNestedExpansion().getLookahead();
+    }
+
+    public boolean isAlwaysSuccessful() {
+        Lookahead la = getLookahead();
+        return la == null ? getNestedExpansion().isPossiblyEmpty() : la.isAlwaysSuccessful();
+    }
+
+
+    public Expansion getLookaheadExpansion() {
+        Lookahead la = getLookahead();
+        return la == null ? this.getNestedExpansion() : la.getLookaheadExpansion();
+    }
+
+    public Expansion getNestedExpansion() {
+        return firstChildOfType(Expansion.class);
+    }
+
+    public boolean getRequiresScanAhead() {
+        return getNestedExpansion().getRequiresScanAhead();
+    }
+    
+    public boolean isPossiblyEmpty() {
+        return true;
+    }
+    
+    public TokenSet getFirstSet() {
+        return getNestedExpansion().getFirstSet();
+//        return getNestedExpansion().getLookaheadExpansion().getFirstSet();
+    }
+    
+    public TokenSet getFinalSet() {
+        return getNestedExpansion().getFinalSet();
+    }
+     
+     public int minimumSize(int unused) {
+         return 0;
+     }
+
+     public int getMaximumSize() {
+         return getNestedExpansion().getMaximumSize();
+     }
+     
+     public boolean isConcrete() {return false;}
+}
+
+
+INJECT ZeroOrMore : 
+     import com.javacc.parsegen.Expansion;
+     import com.javacc.lexgen.TokenSet;
+     extends Expansion implements Expansion.ChoicePoint;
+{
+     private String id;
+     public String getLabel() {
+         if (id == null) {
+             id = getGrammar().generateUniqueIdentifier("ZeroOrMore$", this);
+         }
+         return id;
+     }
+ 
+    public Lookahead getLookahead() {
+        return getNestedExpansion().getLookahead();
+    }
+
+    public Expansion getLookaheadExpansion() {
+        Lookahead la = getLookahead();
+        return la == null ? this.getNestedExpansion() : la.getLookaheadExpansion();
+    }
+ 
+
+    public Expansion getNestedExpansion() {
+        return firstChildOfType(Expansion.class);
+    }
+
+    public boolean getRequiresScanAhead() {
+        return getNestedExpansion().getRequiresScanAhead();
+    }
+
+    public boolean isPossiblyEmpty() {
+        return true;
+    }
+    
+    public TokenSet getFirstSet() {
+         if (firstSet == null) {
+            firstSet = getNestedExpansion().getFirstSet();
+//            firstSet = getNestedExpansion().getLookaheadExpansion().getFirstSet();
+         }
+         return firstSet;
+    }
+    
+    public TokenSet getFinalSet() {
+        return getNestedExpansion().getFinalSet();
+    }
+     
+     public int minimumSize(int unused) {
+         return 0;
+     }
+
+     public int getMaximumSize() {
+         return Integer.MAX_VALUE;
+     }
+     
+     public boolean isConcrete() {return false;}
+}
+
+
+INJECT OneOrMore : 
+     import com.javacc.parsegen.Expansion;
+     import com.javacc.lexgen.TokenSet;
+     extends Expansion implements Expansion.ChoicePoint;
+{
+     private String id;
+     public String getLabel() {
+         if (id == null) {
+             id = getGrammar().generateUniqueIdentifier("OneOrMore$", this);
+         }
+         return id;
+     }
+     
+    public Lookahead getLookahead() {
+        return getNestedExpansion().getLookahead();
+    }
+    
+    public Expansion getLookaheadExpansion() {
+        Lookahead la = getLookahead();
+        return la == null ? this.getNestedExpansion() : la.getLookaheadExpansion();
+    }
+    
+    public boolean getRequiresScanAhead(){
+        Lookahead la = getLookahead();
+        if (la != null) {
+           return la.getRequiresScanAhead();
+        }
+        return getNestedExpansion().getRequiresScanAhead();
+    }
+    
+    public Expansion getNestedExpansion() {
+        return firstChildOfType(Expansion.class);
+    }
+    
+    public boolean isPossiblyEmpty() {
+        return getNestedExpansion().isPossiblyEmpty();
+    }
+    
+    public TokenSet getFirstSet() {
+        return getNestedExpansion().getFirstSet();
+//        return getNestedExpansion().getLookaheadExpansion().getFirstSet();
+    }
+    
+    public TokenSet getFinalSet() {
+         return getNestedExpansion().getFinalSet();
+    }
+     
+     public int minimumSize(int min) {
+           return getNestedExpansion().getMinimumSize();
+     }
+     
+     public int getMaximumSize() {
+         return Integer.MAX_VALUE;
+     }
+ 
+     public boolean isConcrete() {return false;}
+}
+
+
+AttemptBlock AttemptBlock : 
+{
+  boolean hasRecoverExpansion = false;
+}
+{
+ "ATTEMPT"
+ "(" ExpansionChoice ")"
+ "RECOVER"
+ (Block  | "(" ExpansionChoice {hasRecoverExpansion = true;} ")")
+ [
+    SCAN {!hasRecoverExpansion} "("
+    => "(" ExpansionChoice ")"  
+ ]
+ {
+     return CURRENT_NODE;
+ }
+}
+
+INJECT AttemptBlock : 
+   import java.util.List;
+   import com.javacc.parsegen.Expansion;
+   import com.javacc.lexgen.TokenSet;
+   extends Expansion;
+{
+   public Expansion getNestedExpansion() {
+       return firstChildOfType(Expansion.class);
+   }
+   
+   public Expansion getRecoveryExpansion() {
+        List<Expansion> expansions = childrenOfType(Expansion.class);
+        if (getRecoveryCode() == null) {
+            return expansions.get(1);
+        }
+        return expansions.size() > 2 ? expansions.get(2) : null;
+   }
+   
+   public CodeBlock getRecoveryCode() {
+        return firstChildOfType(CodeBlock.class); 
+   }
+   
+   
+    public boolean isPossiblyEmpty() {
+        return getNestedExpansion().isPossiblyEmpty();
+    }
+    
+    //REVISIT: Should this take RECOVER into account? I don't think so,
+    // but I still have to think about it a bit more.
+    public TokenSet getFirstSet() {
+        if (firstSet == null) {
+           firstSet=getNestedExpansion().getFirstSet();
+        }
+        return firstSet;
+    }
+   
+   
+    //REVISIT: Should this take RECOVER into account? 
+    public TokenSet getFinalSet() {
+        return getNestedExpansion().getFinalSet();
+    }
+     
+     public int minimumSize(int min) {
+           return getNestedExpansion().getMinimumSize();
+     }
+
+     public int getMaximumSize() {
+         return getNestedExpansion().getMaximumSize();
+     }
+     
+     public boolean isConcrete() {
+           return getNestedExpansion().isConcrete();
+     }
+}
+
+Failure Failure : 
+   {Token t;}
+   t="FAIL"
+   [
+      t=<STRING_LITERAL>
+      |
+      Block
+   ]
+   {
+       String message = "Failure: ";
+       message += removeEscapesAndQuotes(t);
+       CURRENT_NODE.setMessage(message);
+       return CURRENT_NODE;
+   }
+;
+
+
+
+INJECT Failure :
+   import com.javacc.lexgen.TokenSet;
+   extends com.javacc.parsegen.Expansion
+{
+    public CodeBlock getCode() {
+        return firstChildOfType(CodeBlock.class);
+    }
+
+    public boolean isConcrete() {return true;}
+    
+    public int getMaximumSize() {return 0;}
+
+    public int minimumSize(int min) {return 0;}
+
+    public boolean isPossiblyEmpty() {return true;}
+    
+    public TokenSet getFirstSet() {return new TokenSet(getGrammar());}
+
+    public TokenSet getFinalSet() {return new TokenSet(getGrammar());}
+
+    private String message;
+
+    public String getMessage() {return message;}
+
+    public void setMessage(String message) {this.message = message;}
+
+    public boolean isAlwaysSuccessful() {return false;}
+}
+
+LexicalStateSwitch : "LEXICAL_STATE" <IDENTIFIER>;
+
+INJECT LexicalStateSwitch : 
+   import com.javacc.lexgen.TokenSet;
+   extends com.javacc.parsegen.Expansion
+{
+    public boolean isConcrete() {return true;}
+    
+    public int getMaximumSize() {return 0;}
+
+    public int minimumSize(int min) {return 0;}
+
+    public boolean isPossiblyEmpty() {return true;}
+    
+    public TokenSet getFirstSet() {return new TokenSet(getGrammar());}
+
+    public TokenSet getFinalSet() {return new TokenSet(getGrammar());}
+
+    public String getLexicalStateName() {return firstChildOfType(Identifier.class).getNormalizedText();}
+
+    public boolean isAlwaysSuccessful() {return true;}
+}
+
+
+TryBlock TryBlock : 
+    "try" "{" ExpansionChoice "}"
+    (
+        CatchBlock
+    )*
+    [
+        FinallyBlock
+    ]
+    {
+       return CURRENT_NODE;
+    }
+;
+
+INJECT TryBlock  : 
+    import java.util.List;
+    import com.javacc.lexgen.TokenSet;
+    import com.javacc.parsegen.Expansion;
+    extends Expansion;
+{
+    public Expansion getNestedExpansion() {
+        return firstChildOfType(Expansion.class);
+    }
+    
+    public List<CatchBlock> getCatchBlocks() {
+        return childrenOfType(CatchBlock.class);
+    }
+
+    public FinallyBlock getFinallyBlock() {
+        return firstChildOfType(FinallyBlock.class);
+    }
+    
+    public boolean isPossiblyEmpty() {
+        return getNestedExpansion().isPossiblyEmpty();
+    }
+    
+    public TokenSet getFirstSet() {
+        return getNestedExpansion().getFirstSet();
+    }
+    
+    public TokenSet getFinalSet() {
+        return getNestedExpansion().getFinalSet();
+    }
+     
+     public int minimumSize(int min) {
+           return getNestedExpansion().getMinimumSize();
+     }
+
+     public int getMaximumSize() {
+         return getNestedExpansion().getMaximumSize();
+     }
+     
+     public boolean isConcrete() {
+          return getNestedExpansion().isConcrete();
+     }
+}
+
+
+INJECT CodeBlock :
+   import com.javacc.lexgen.TokenSet;
+   extends com.javacc.parsegen.Expansion;
+{
+    public CodeBlock getJavaCode() {
+        return this;
+    }
+    
+    public boolean isPossiblyEmpty() {
+       return true;
+    }
+    
+    /**
+     * These are here to fullfil the superclass contract 
+     */
+
+    public TokenSet getFirstSet() {return new TokenSet(getGrammar());}
+
+    public TokenSet getFinalSet() {return new TokenSet(getGrammar());}
+    
+    public int minimumSize(int unused) {
+        return 0;
+    }
+
+    public int getMaximumSize() {
+        return 0;
+    }
+    
+    public boolean isConcrete() {
+        return true; //REVISIT.
+    }
+
+    private boolean appliesInLookahead;
+
+    public void setAppliesInLookahead(boolean b) {
+        appliesInLookahead = b;
+    }
+
+    public boolean getAppliesInLookahead() {
+        return appliesInLookahead;
+    }
+}
+
+RegexpExpansion #void :
+ (
+  RegexpStringLiteral 
+  |
+  SCAN 3 InPlaceRegexp 
+  |
+  SCAN 2 RegexpRef 
+  |
+  EndOfFile 
+ ) 
+;
+
+
+InPlaceRegexp #void :
+{
+    RegularExpression re, choice;
+    String image = "";
+    Token t;
+    boolean isPrivate= false;
+}
+  t=<LT>
+  [
+   (
+     t=<IDENTIFIER> {image = t.getImage();}
+     |
+     SCAN ~\...\BNFProduction 
+     => t=<HASH_ID> {image = t.getImage().substring(1); isPrivate= true;}
+   )
+   ":"
+  ]
+  {clearNodeScope();}
+  RegexpChoice {choice = (RegularExpression) peekNode();} 
+  <GT>
+  {
+	  if (choice instanceof RegexpRef) {
+	    RegexpSequence seq = new RegexpSequence();
+	    seq.addChild(choice);
+	    re = seq;
+	  } else {
+	    re = choice;
+	  }
+	  if (image.length() ==0 && isInProduction("BNFProduction")) {
+	     grammar.addParseError(t, "It is mandatory to label an inline regexp in a grammar production.");
+	  }
+	  re.setLabel(image);
+	  re.setGeneratedClassName(image);
+	  re.setPrivate(isPrivate); 
+	  re.setBeginLine(t.getBeginLine());
+	  re.setBeginColumn(t.getBeginColumn());
+	  pokeNode(re);
+  }
+;
+
+RegexpStringLiteral RegexpStringLiteral #RegexpStringLiteral :
+   <STRING_LITERAL>
+   {
+      String image = removeEscapesAndQuotes(current_token);
+      CURRENT_NODE.setImage(image);
+      return CURRENT_NODE;
+   }
+;
+
+INJECT RegexpStringLiteral : 
+   import com.javacc.lexgen.*;
+   extends RegularExpression;
+{
+  private String image;
+  
+
+  public String toString() {
+    return super.toString() + " - " + getImage();
+  }
+  
+  public String getImage() {
+    return image;
+  }
+
+   public void setImage(String image) {
+       this.image = image;
+  }
+  
+  public boolean equals(Object obj) {
+      return obj instanceof RegexpStringLiteral && ((RegexpStringLiteral) obj).image == this.image;
+  }
+  
+  public int hashCode() {
+      return image.hashCode();
+  }
+}
+
+RegexpRef RegexpRef : 
+{
+   Token t;
+}
+    "<"
+    t=<IDENTIFIER> 
+    ">" 
+    {
+       CURRENT_NODE.setLabel(t.getImage());
+       return CURRENT_NODE;
+    }
+;
+
+INJECT RegexpRef : 
+    import com.javacc.lexgen.*;
+    extends RegularExpression;
+{
+    private RegularExpression regexp;
+
+    public void setRegexp(RegularExpression regexp) {
+        this.regexp = regexp;
+    }
+
+    public RegularExpression getRegexp() {
+        return regexp;
+    }
+    
+    public boolean isPrivate() {
+        return regexp!= null && regexp.isPrivate(); //REVISIT, why do we need a null check?
+    }
+}
+
+void EndOfFile : 
+    "<" 
+    <IDENTIFIER>  
+    [
+        SCAN {!getToken(0).getImage().equals("EOF")}#
+        => FAIL
+    ]
+    =>||
+    ">" 
+;
+
+
+
+INJECT EndOfFile : extends com.javacc.lexgen.RegularExpression;
+
+RegexpChoice :
+    RegexpSequence 
+    ("|" RegexpSequence)*
+;
+
+RegexpChoiceInParen #RegexpChoice : 
+   "(" RegexpSequence() ("|" RegexpSequence())* ")"
+;
+
+INJECT RegexpChoice : 
+    import java.util.List;
+    import com.javacc.lexgen.RegularExpression;
+    extends RegularExpression;
+{
+    public List<RegularExpression> getChoices() {
+        return childrenOfType(RegularExpression.class);
+    }
+}
+
+RegexpSequence :
+   (
+	  RegexpStringLiteral
+	  |
+	  RegexpRef
+	  |
+	  CharacterList
+	  |
+	  RepeatedRegexp
+   )+
+;
+
+INJECT RegexpSequence : 
+   import java.util.*;
+   import com.javacc.lexgen.RegularExpression;
+   extends RegularExpression;
+{
+   public List<RegularExpression> getUnits() {
+       return childrenOfType(RegularExpression.class);
+   }
+}
+
+RepeatedRegexp #void : 
+{
+     int r1 = 0, r2 = -1;
+     boolean hasMax = false;
+}
+  RegexpChoiceInParen
+  (  "+" #OneOrMoreRegexp(2) 
+   | "*" #ZeroOrMoreRegexp(2)
+   | "?" #ZeroOrOneRegexp(2) 
+   | "{" r1 = IntegerLiteral
+         [ "," { hasMax = true; } [ r2 = IntegerLiteral ] ]
+     "}" #RepetitionRange(4 + (hasMax ? 1 : 0) + (r2!=-1 ? 1 : 0))
+     {
+         RepetitionRange range = (RepetitionRange) peekNode();
+         range.setMin(r1);
+         range.setMax(r2);
+     }
+  )?
+;
+
+int IntegerLiteral :
+  <INTEGER_LITERAL>
+  {
+      try {
+        return Integer.parseInt(current_token.toString());
+      } catch (NumberFormatException e) {
+        throw new Error();
+      }
+  }
+;
+
+INJECT RepetitionRange : 
+   import com.javacc.lexgen.RegularExpression;
+   extends RegularExpression;
+{
+    private int min = 0;
+    private int max = -1;
+    public boolean hasMax() {
+        for (Node n : children) {
+	   if (n instanceof Token) {
+	       Token t = (Token) n;
+               if (t.getType() == COMMA) return true;	       
+	   }
+
+        }
+        return false;
+    }
+    
+	public void setMin(int min) {
+	    this.min = min;
+	}
+	
+	public int getMin() {
+	    return min;
+	}
+	
+	public void setMax(int max) {
+	    this.max = max;
+	}
+	
+	public int getMax() {
+	    return max;
+	}
+
+    public RegularExpression getRegexp() { 
+        return firstChildOfType(RegularExpression.class);
+    }
+}
+
+INJECT OneOrMoreRegexp : 
+   import com.javacc.lexgen.RegularExpression;
+   extends RegularExpression;
+{
+   public RegularExpression getRegexp() 
+   {
+      return firstChildOfType(RegularExpression.class);
+   }
+}
+
+INJECT ZeroOrMoreRegexp : 
+   import com.javacc.lexgen.RegularExpression;
+   extends RegularExpression;
+{
+   public RegularExpression getRegexp() 
+   {
+      return firstChildOfType(RegularExpression.class);
+   }
+   
+   public void setRegexp(RegularExpression regexp) {
+      RegularExpression current = getRegexp();
+      if (current != null) {
+          addChild(indexOf(current), regexp);
+          removeChild(current);
+      } else {
+          addChild(0, regexp);
+      }
+   }
+}
+
+INJECT ZeroOrOneRegexp : 
+   import com.javacc.lexgen.RegularExpression;
+   extends RegularExpression;
+{
+   public RegularExpression getRegexp() 
+   {
+      return firstChildOfType(RegularExpression.class);
+   }
+   
+   public void setRegexp(RegularExpression regexp) {
+      RegularExpression current = getRegexp();
+      if (current != null) {
+          addChild(indexOf(current), regexp);
+          removeChild(current);
+      } else {
+          addChild(0, regexp);
+      }
+   }
+}
+
+CharacterList CharacterList :
+  ["~"]
+  "[" [CharacterRange
+        ( "," CharacterRange)*
+      ]
+  "]"
+   {
+      return CURRENT_NODE;
+   }
+;
+
+INJECT CharacterList : 
+   import com.javacc.lexgen.*;
+   import java.util.*;
+   extends RegularExpression;
+{
+    public List<CharacterRange> getDescriptors() {
+        return childrenOfType(CharacterRange.class);
+    }
+
+    public boolean isNegated() {
+        for (Node n : children) {
+	    if (n instanceof Token) {
+	       Token t = (Token) n;
+               if (t.getType() == TILDE) {
+                  return true;
+               }
+	       }
+        }
+        return false;
+    }
+}
+
+CharacterRange CharacterRange #CharacterRange :
+{
+      Token imageL, imageR;
+}
+  imageL=<STRING_LITERAL>
+        {
+          String lString = removeEscapesAndQuotes(imageL);
+          CURRENT_NODE.left = character_descriptor_assign(current_token, lString);
+          CURRENT_NODE.right = CURRENT_NODE.left;
+        }
+   [
+   "-"
+    imageR=<STRING_LITERAL>
+        {
+          String rString = removeEscapesAndQuotes(imageR);
+          CURRENT_NODE.right = character_descriptor_assign(current_token, rString, lString);
+        }
+   ]
+   {return CURRENT_NODE;}
+;
+
+INJECT CharacterRange :
+{
+    public char left, right;
+    
+    public CharacterRange() {}
+    
+    public CharacterRange(char left, char right) {
+        setRange(left, right);
+    }
+    
+    public void setRange(char left, char right) {
+        if (left > right) {
+            throw new ArrayIndexOutOfBoundsException();
+        }
+        this.left = left;
+        this.right = right;
+    }
+
+    public boolean isSingleChar() {
+       return left == right;
+    }
+}
+
+

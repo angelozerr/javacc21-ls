@@ -9,8 +9,6 @@
 *******************************************************************************/
 package com.javacc.ls.ls.commons.client;
 
-import com.javacc.ls.ls.commons.client.CommandCapabilities;
-
 /**
  * Extended client capabilities not defined by the LSP.
  * 
