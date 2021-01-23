@@ -15,8 +15,10 @@ public class JavaCC2TextMateConverterTest {
 	public static void main(String[] args) throws IOException, ParseException {
 		JavaCC2TextMateConverter converter = new JavaCC2TextMateConverter();
 		StringWriter writer = new StringWriter();
-		Path path = Paths.get("src/main/java/JSON.javacc");
-		converter.convert(path.toFile().toString(), getJavaCCContent(path), writer);
+		Path path = Paths.get("src/main/java/JavaCC.javacc");
+		String grammarName = "JSON";
+		String[] fileTypes = {"json"};
+		converter.convert(path.toFile().toString(), getJavaCCContent(path), grammarName, fileTypes, writer);
 		System.err.println(writer.toString());
 	}
 
