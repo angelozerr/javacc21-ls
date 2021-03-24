@@ -9,6 +9,18 @@ The Language Server for JavaCC21 supports:
  * definition for identifier
  * highlight for identifiers
 
- See the following demo:
+See the following demo:
  
- ![JavaCC21 demo](images/JavaCC21Demo.gif)
+![JavaCC21 demo](images/JavaCC21Demo.gif)
+
+## Run
+
+To run the language server, download the compiled JAR [from here](https://github.com/angelozerr/javacc21-ls/raw/main/com.javacc.lsp4e/server/com.javacc.ls-uber.jar).
+
+Then, use the following command:
+
+```sh
+java -jar com.javacc.ls-uber.jar
+```
+
+Language server protocol messages are passed using standard I/O.
